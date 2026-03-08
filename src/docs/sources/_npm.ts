@@ -32,9 +32,7 @@ export function parseNpmSpec(input: string): NpmPackageSpec {
   }
 
   // Split version: rest is now [@scope/]name[@version]
-  const versionSep = rest.startsWith("@")
-    ? rest.indexOf("@", 1)
-    : rest.indexOf("@");
+  const versionSep = rest.startsWith("@") ? rest.indexOf("@", 1) : rest.indexOf("@");
   const hasVersion = versionSep > 0;
   const name = hasVersion ? rest.slice(0, versionSep) : rest;
   const version = hasVersion ? rest.slice(versionSep + 1) : "latest";
@@ -79,16 +77,11 @@ export function parseNpmURL(url: string): string | undefined {
     return undefined;
   }
   // /package/@scope/name or /package/name
-  const pkgMatch = parsed.pathname.match(
-    /^\/package\/((?:@[^/]+\/)?[^/]+)\/?$/,
-  );
+  const pkgMatch = parsed.pathname.match(/^\/package\/((?:@[^/]+\/)?[^/]+)\/?$/);
   if (pkgMatch) return pkgMatch[1];
   // Short form: npmjs.com/<name> (not a known route like /settings, /signup, etc.)
   const shortMatch = parsed.pathname.match(/^\/((?:@[^/]+\/)?[^/]+)\/?$/);
-  if (
-    shortMatch &&
-    !/^(package|settings|signup|login|org|search)$/.test(shortMatch[1]!)
-  ) {
+  if (shortMatch && !/^(package|settings|signup|login|org|search)$/.test(shortMatch[1]!)) {
     return shortMatch[1];
   }
   return undefined;
