@@ -71,8 +71,8 @@ const docs = new DocsManager(new DocsSourceNpm("h3"));
 const docs = new DocsManager(new DocsSourceHTTP("https://h3.unjs.io"));
 
 await docs.load();
-console.log(docs.tree);     // NavEntry[] navigation tree
-console.log(docs.flat);     // FlatEntry[] flat list
+console.log(docs.tree); // NavEntry[] navigation tree
+console.log(docs.flat); // FlatEntry[] flat list
 
 const content = await docs.getContent(docs.flat[0]);
 const results = docs.filter("query"); // fuzzy search
