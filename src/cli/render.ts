@@ -1,92 +1,82 @@
-import type { FlatEntry } from "../docs/manager.ts";
-import { dim, cyan, padTo, truncateTo, highlightAnsi } from "./ansi.ts";
-import { calcNavWidth, renderNavPanel } from "./nav.ts";
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
+import { parseMeta, renderToText } from "md4x";
+import type { DocsManager } from "../docs/manager.ts";
+import { renderContent } from "./content.ts";
 
-export { calcNavWidth } from "./nav.ts";
-export { renderContent } from "./content.ts";
+export async function singleFileMode(filePath: string, plain?: boolean, isURL?: boolean) {
+  const raw = isURL
+    ? await fetch(filePath, {
+        headers: { accept: "text/markdown, text/plain;q=0.9, text/html;q=0.8" },
+      }).then((r) => r.text())
+    : await readFile(filePath, "utf8");
+  if (plain) {
+    process.stdout.write(renderToText(raw) + "\n");
+    return;
+  }
+  const meta = parseMeta(raw);
+  const slug = isURL
+    ? new URL(filePath).pathname.split("/").pop()?.replace(/\.md$/i, "") || "page"
+    : basename(filePath, ".md");
+  const lines = await renderContent(
+    raw,
+    { slug, path: "/" + slug, title: meta.title || slug, order: 0 },
+    0,
+  );
+  process.stdout.write(lines.join("\n") + "\n");
+}
 
-export function renderSplit(
-  flat: FlatEntry[],
-  cursor: number,
-  contentLines: string[],
-  contentScroll: number,
-  search?: string,
-  focus?: "nav" | "content" | "content-search",
-  contentSearch?: string,
-  searchMatches?: Set<number>,
-  sidebarVisible = true,
-): string {
-  const rows = process.stdout.rows || 24;
-  const navWidth = sidebarVisible ? calcNavWidth(flat) : 0;
-  const bodyRows = rows - 1;
+export async function pageMode(docs: DocsManager, pagePath: string, plain?: boolean) {
+  const normalized = pagePath.startsWith("/") ? pagePath : "/" + pagePath;
+  const { entry, raw } = await docs.resolvePage(normalized);
 
-  const navLines = sidebarVisible
-    ? renderNavPanel(flat, cursor, bodyRows, navWidth, search, searchMatches)
-    : [];
-  const rawRight = contentLines.slice(contentScroll, contentScroll + bodyRows);
-  const rightLines = contentSearch
-    ? rawRight.map((l) => highlightAnsi(l, contentSearch))
-    : rawRight;
-
-  const cols = process.stdout.columns || 80;
-  const contentWidth = sidebarVisible ? cols - navWidth - 3 : cols - 2;
-  const isFocusContent = focus === "content" || focus === "content-search";
-  const reset = "\x1B[0m";
-  const output: string[] = [];
-  for (let i = 0; i < bodyRows; i++) {
-    const right = rightLines[i] || "";
-    if (sidebarVisible) {
-      output.push(
-        reset +
-          padTo(navLines[i] || "", navWidth) +
-          reset +
-          (isFocusContent ? cyan("│") : dim("│")) +
-          reset +
-          " " +
-          truncateTo(right, contentWidth) +
-          reset,
-      );
-    } else {
-      output.push(reset + " " + truncateTo(right, contentWidth) + reset);
-    }
+  if (!raw) {
+    console.error(`Page not found: ${pagePath}`);
+    process.exit(1);
   }
 
-  output.push(
-    search !== undefined
-      ? dim("  esc") + " cancel  " + dim("enter") + " go"
-      : focus === "content-search"
-        ? dim("  /") + contentSearch + "▌  " + dim("esc") + " cancel  " + dim("enter") + " confirm"
-        : focus === "content"
-          ? dim("  ↑↓") +
-            " scroll  " +
-            dim("tab") +
-            " links  " +
-            dim("⏎") +
-            " open  " +
-            dim("/") +
-            " search" +
-            (contentSearch ? "  " + dim("n") + "/" + dim("N") + " next/prev" : "") +
-            "  " +
-            dim("t") +
-            " sidebar  " +
-            dim("⌫") +
-            " back  " +
-            dim("q") +
-            " quit"
-          : dim("  ↑↓") +
-            " navigate  " +
-            dim("⏎") +
-            " read  " +
-            dim("space") +
-            " page ↓  " +
-            dim("/") +
-            " search  " +
-            dim("t") +
-            " sidebar  " +
-            dim("q") +
-            " quit",
-  );
+  const slug = (entry?.entry.path || normalized).split("/").pop() || "";
+  const navEntry = entry?.entry || {
+    slug,
+    path: normalized,
+    title: parseMeta(raw).title || slug,
+    order: 0,
+  };
 
-  const eol = "\x1B[K";
-  return output.map((l) => l + eol).join("\n");
+  if (plain) {
+    process.stdout.write(renderToText(raw) + "\n");
+  } else {
+    const lines = await renderContent(raw, navEntry, 0);
+    process.stdout.write(lines.join("\n") + "\n");
+  }
+}
+
+export async function plainMode(docs: DocsManager, pagePath?: string) {
+  const navigable = docs.pages;
+  if (navigable.length === 0) {
+    console.log("No pages found.");
+    return;
+  }
+
+  // Render TOC
+  const tocLines: string[] = ["Table of Contents", ""];
+  for (const f of navigable) {
+    const indent = "  ".repeat(f.depth);
+    tocLines.push(`${indent}- [${f.entry.title}](${f.entry.path})`);
+  }
+  process.stdout.write(tocLines.join("\n") + "\n");
+
+  // Render target page content (specific page or first page)
+  let targetEntry = navigable[0]!;
+  if (pagePath) {
+    const resolved = await docs.resolvePage(pagePath);
+    if (resolved.raw) {
+      process.stdout.write(renderToText(resolved.raw) + "\n\n");
+    }
+  } else {
+    const raw = await docs.getContent(targetEntry);
+    if (raw) {
+      process.stdout.write(renderToText(raw) + "\n\n");
+    }
+  }
 }

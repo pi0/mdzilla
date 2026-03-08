@@ -1,3 +1,12 @@
+import { isAgent } from "std-env";
+
+const noColor = !!(
+  process.env.NO_COLOR ||
+  process.env.TERM === "dumb" ||
+  !process.stdout.isTTY ||
+  isAgent
+);
+
 const ESC = "\x1B[";
 
 // Matches CSI (\x1B[...letter) and OSC (\x1B]...BEL or \x1B]...\x1B\\)
@@ -11,11 +20,12 @@ export const hideCursor = () => process.stdout.write(`${ESC}?25l`);
 export const showCursor = () => process.stdout.write(`${ESC}?25h`);
 export const enableMouse = () => process.stdout.write(`${ESC}?1000h${ESC}?1006h`);
 export const disableMouse = () => process.stdout.write(`${ESC}?1006l${ESC}?1000l`);
-export const bold = (s: string) => `${ESC}1m${s}${ESC}0m`;
-export const dim = (s: string) => `${ESC}2m${s}${ESC}0m`;
-export const cyan = (s: string) => `${ESC}36m${s}${ESC}0m`;
-export const yellow = (s: string) => `${ESC}33m${s}${ESC}0m`;
+export const bold = (s: string) => (noColor ? s : `${ESC}1m${s}${ESC}0m`);
+export const dim = (s: string) => (noColor ? s : `${ESC}2m${s}${ESC}0m`);
+export const cyan = (s: string) => (noColor ? s : `${ESC}36m${s}${ESC}0m`);
+export const yellow = (s: string) => (noColor ? s : `${ESC}33m${s}${ESC}0m`);
 export const bgGray = (s: string) => {
+  if (noColor) return s;
   const bg = `${ESC}48;5;237m`;
   // Re-apply bg after any inner resets so nested styles don't kill it
   const inner = s.replaceAll(`${ESC}0m`, `${ESC}0m${bg}`);

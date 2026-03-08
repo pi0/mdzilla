@@ -53,6 +53,51 @@ export class DocsManager {
     return fuzzyFilter(this.flat, query, ({ entry }) => [entry.title, entry.path]);
   }
 
+  /** Flat entries that are navigable pages (excludes directory stubs). */
+  get pages(): FlatEntry[] {
+    return this.flat.filter((f) => f.entry.page !== false);
+  }
+
+  /** Find a flat entry by path (exact or with trailing slash). */
+  findByPath(path: string): FlatEntry | undefined {
+    return this.flat.find(
+      (f) => f.entry.page !== false && (f.entry.path === path || f.entry.path === path + "/"),
+    );
+  }
+
+  /**
+   * Resolve a page path to its content, trying:
+   * 1. Exact match in the navigation tree
+   * 2. Stripped common prefix (e.g., /docs/guide/... → /guide/...)
+   * 3. Direct source fetch (for HTTP sources with uncrawled paths)
+   */
+  async resolvePage(path: string): Promise<{ entry?: FlatEntry; raw?: string }> {
+    const normalized = path.startsWith("/") ? path : "/" + path;
+
+    // Try exact match first
+    const entry = this.findByPath(normalized);
+    if (entry) {
+      const raw = await this.getContent(entry);
+      if (raw) return { entry, raw };
+    }
+
+    // Try stripping common prefixes (e.g. /docs/guide/... → /guide/...)
+    const prefixed = normalized.match(/^\/[^/]+(\/.+)$/);
+    if (prefixed) {
+      const stripped = this.findByPath(prefixed[1]!);
+      if (stripped) {
+        const raw = await this.getContent(stripped);
+        if (raw) return { entry: stripped, raw };
+      }
+    }
+
+    // Fallback: fetch directly from source (works for HTTP sources with uncrawled paths)
+    const raw = await this.source.readContent(normalized).catch(() => undefined);
+    if (raw) return { raw };
+
+    return {};
+  }
+
   /** Return indices of matching flat entries (case-insensitive substring). */
   matchIndices(query: string): number[] {
     if (!query) return [];

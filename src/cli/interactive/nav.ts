@@ -1,5 +1,5 @@
-import type { FlatEntry } from "../docs/manager.ts";
-import { bold, dim, bgGray, padTo, highlight } from "./ansi.ts";
+import type { FlatEntry } from "../../docs/manager.ts";
+import { bold, dim, bgGray, padTo, highlight } from "../_ansi.ts";
 
 export function calcNavWidth(flat: FlatEntry[]): number {
   const cols = process.stdout.columns || 80;
