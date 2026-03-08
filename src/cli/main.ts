@@ -6,7 +6,7 @@ import { parseArgs } from "node:util";
 import { parseMeta, renderToText } from "md4x";
 import { isAgent } from "std-env";
 import { DocsManager } from "../docs/manager.ts";
-import { DocsSourceFS, DocsSourceGit, DocsSourceHTTP } from "../docs/source.ts";
+import { DocsSourceFS, DocsSourceGit, DocsSourceHTTP, DocsSourceNpm } from "../docs/source.ts";
 import { DocsExporterFS } from "../docs/exporter.ts";
 import {
   bold,
@@ -35,19 +35,32 @@ async function main() {
   });
 
   const exportDir = values.export;
-  const plain = values.plain || values.headless || false;
-
   const docsDir = positionals[0];
+  const plain =
+    values.plain || values.headless || docsDir?.startsWith("npm:") || false;
   if (values.help || !docsDir) {
     const bin = `${bold(cyan("npx"))} ${bold("mdzilla")}`;
     console.log(
       [
-        `${bold("mdzilla")} ${dim("— interactive docs browser")}`,
+        dim("        /\\    /\\    /\\"),
+        dim("       /  \\  /  \\  /  \\"),
+        dim("      ╭────────────────╮"),
+        dim("      │") + bold(" # ") + dim(" ░░░░░       │"),
+        dim("      │    ░░░░░░░░    │"),
+        dim("      │    ░░░░░░      │"),
+        dim("      │    ░░░░░░░     │"),
+        dim("      │    ░░░░        │"),
+        dim("      │   ") + cyan("◉") + dim("        ") + cyan("◉") + dim("   │"),
+        dim("      ╰─┬──┬──┬──┬──┬──╯"),
+        dim("        ▽  ▽  ▽  ▽  ▽"),
+        "",
+        `  ${bold("mdzilla")} ${dim("— Markdown browser for humans and agents")}`,
         "",
         `${bold("Usage:")}`,
         `  ${bin} ${cyan("<dir>")}                 ${dim("Browse local docs directory")}`,
         `  ${bin} ${cyan("<file.md>")}             ${dim("Render a single markdown file")}`,
         `  ${bin} ${cyan("gh:owner/repo")}         ${dim("Browse GitHub repo docs")}`,
+        `  ${bin} ${cyan("npm:package-name")}      ${dim("Browse npm package docs")}`,
         `  ${bin} ${cyan("https://example.com")}   ${dim("Browse remote docs via HTTP")}`,
         "",
         `${bold("Options:")}`,
@@ -76,7 +89,9 @@ async function main() {
       ? new DocsSourceHTTP(docsDir)
       : docsDir.startsWith("gh:")
         ? new DocsSourceGit(docsDir)
-        : new DocsSourceFS(docsDir);
+        : docsDir.startsWith("npm:")
+          ? new DocsSourceNpm(docsDir)
+          : new DocsSourceFS(docsDir);
   const docs = new DocsManager(source);
   await docs.load();
 

@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/unjs/mdzilla/main/.assets/logo.svg" width="200" alt="mdzilla">
+  <img src=".assets/logo.svg" alt="mdzilla" width="200" height="200">
 </p>
 
 <h1 align="center">mdzilla</h1>
@@ -10,16 +10,9 @@ Markdown browser for humans and agents.
 
 <p align="center">
 
-<!-- automd:badges color=yellow -->
-
-[![npm version](https://img.shields.io/npm/v/mdzilla?color=yellow)](https://npmjs.com/package/mdzilla)
-[![npm downloads](https://img.shields.io/npm/dm/mdzilla?color=yellow)](https://npm.chart.dev/mdzilla)
-
-<!-- /automd -->
-
 </p>
 
-> Browse local directories, GitHub repos, and remote websites — all from your terminal. Built on [md4x](https://github.com/unjs/md4x), [mdream](https://github.com/harlan-zw/mdream), [giget](https://github.com/unjs/giget) and [speed-highlight](https://github.com/speed-highlight/core).
+> Browse docs from local directories, GitHub repos, and remote websites — all from your terminal. Built on [md4x](https://github.com/unjs/md4x), [mdream](https://github.com/harlan-zw/mdream), [giget](https://github.com/unjs/giget) and [speed-highlight](https://github.com/speed-highlight/core).
 
 Works best with [Docus](https://docus.dev) and [Undocs](https://undocs.pages.dev/) sources or any website supporting [`/llms.txt`](https://llmstxt.org/).
 
@@ -29,6 +22,7 @@ Works best with [Docus](https://docus.dev) and [Undocs](https://undocs.pages.dev
 npx mdzilla <dir>                 # Browse local docs directory
 npx mdzilla <file.md>             # Render a single markdown file
 npx mdzilla gh:owner/repo         # Browse GitHub repo docs
+npx mdzilla npm:package-name      # Browse npm package docs
 npx mdzilla https://example.com   # Browse remote docs via HTTP
 ```
 
@@ -41,6 +35,7 @@ npx mdzilla https://example.com   # Browse remote docs via HTTP
 | **Local**       | `mdzilla ./docs`             | Scan a local docs directory       |
 | **Single file** | `mdzilla README.md`          | Render a single markdown file     |
 | **GitHub**      | `mdzilla gh:unjs/h3`         | Download and browse a GitHub repo |
+| **npm**         | `mdzilla npm:h3`             | Browse an npm package's docs      |
 | **HTTP**        | `mdzilla https://h3.unjs.io` | Browse remote docs via HTTP       |
 
 ### Export

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Body: rounded rectangle (document shape) -->
+  <rect x="40" y="30" width="120" height="150" rx="18" ry="18" fill="#2B2D42"/>
+
+  <!-- Document lines (markdown feel) -->
+  <rect x="62" y="70" width="50" height="6" rx="3" fill="#8D99AE"/>
+  <rect x="62" y="86" width="76" height="6" rx="3" fill="#8D99AE"/>
+  <rect x="62" y="102" width="62" height="6" rx="3" fill="#8D99AE"/>
+  <rect x="62" y="118" width="70" height="6" rx="3" fill="#8D99AE"/>
+  <rect x="62" y="134" width="40" height="6" rx="3" fill="#8D99AE"/>
+
+  <!-- Heading hash mark (markdown #) -->
+  <text x="62" y="60" font-family="monospace" font-weight="bold" font-size="18" fill="#EDF2F4">#</text>
+
+  <!-- Eyes -->
+  <circle cx="78" cy="172" r="5" fill="#EF233C"/>
+  <circle cx="122" cy="172" r="5" fill="#EF233C"/>
+
+  <!-- Teeth (zilla bite on bottom) -->
+  <polygon points="68,180 74,192 80,180" fill="#EDF2F4"/>
+  <polygon points="88,180 94,192 100,180" fill="#EDF2F4"/>
+  <polygon points="108,180 114,192 120,180" fill="#EDF2F4"/>
+  <polygon points="128,180 134,192 140,180" fill="#EDF2F4"/>
+
+  <!-- Spikes on top (zilla horns) -->
+  <polygon points="70,30 78,10 86,30" fill="#2B2D42"/>
+  <polygon points="92,30 100,6 108,30" fill="#2B2D42"/>
+  <polygon points="114,30 122,10 130,30" fill="#2B2D42"/>
+</svg>

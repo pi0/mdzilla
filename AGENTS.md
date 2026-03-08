@@ -22,6 +22,7 @@ src/
       _base.ts      — DocsSource abstract base class
       fs.ts         — DocsSourceFS (local filesystem), includes buildFileMap()
       git.ts        — DocsSourceGit (GitHub via giget)
+      npm.ts        — DocsSourceNpm (npm packages via giget)
       http.ts       — DocsSourceHTTP (remote HTTP/HTML→markdown, llms.txt support)
     exporter.ts     — DocsExporter (abstract), DocsExporterFS
 test/
@@ -94,6 +95,8 @@ interface ScanNavOptions {
 - `DocsSourceFS` — load from local filesystem directory
 - `DocsSourceGit` — download from GitHub via giget, then read locally
   - `DocsSourceGitOptions` — `{ auth?: string, subdir?: string }`
+- `DocsSourceNpm` — download npm package via giget, then read locally
+  - `DocsSourceNpmOptions` — `{ subdir?: string }`
 - `DocsSourceHTTP` — fetch pages over HTTP with `Accept: text/markdown`; falls back to mdream HTML→markdown conversion
   - `DocsSourceHTTPOptions` — `{ headers?: Record<string, string> }`
 
@@ -110,12 +113,25 @@ interface ScanNavOptions {
 - `flattenTree(tree, depth, fileMap)` — flatten NavEntry tree → FlatEntry[]
 - `buildFileMap(basePath, dir)` — walk directory, map nav paths → filesystem paths
 
-## CLI Modes
+## CLI
+
+The CLI is available as both `mdzilla` and the shorter `mdz` alias (see `bin` in `package.json`).
+
+### Usage Maintenance
+
+When CLI options, modes, or usage patterns change, keep these in sync:
+
+- **`src/cli/main.ts`** — `parseArgs` options and the help text printed on `--help`
+- **`README.md`** — Quick Start, Features tables, and Options sections
+- **This file** — CLI Modes section below
+
+### Modes
 
 ```bash
 pnpm mdzilla <dir>               # browse local docs directory
 pnpm mdzilla <file.md>           # render single markdown file
 pnpm mdzilla gh:owner/repo       # browse GitHub repo docs
+pnpm mdzilla npm:package-name    # browse npm package docs
 pnpm mdzilla https://example.com # browse remote docs via HTTP
 pnpm mdzilla <dir> --export <out> # export docs to flat .md files
 ```
