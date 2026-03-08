@@ -67,7 +67,13 @@ npx mdzilla gh:nuxt/nuxt --plain --page /getting-started/seo-meta
 
 ### Headless Mode
 
-Use `--plain` for non-interactive output — auto-enabled when called by AI agents or when stdout is not a TTY.
+Use `--plain` (or `--headless`) for non-interactive output — works like `cat` but for rendered markdown. Auto-enabled when piping output or when called by AI agents.
+
+```sh
+npx mdzilla README.md --plain          # Pretty-print a markdown file
+npx mdzilla README.md | head           # Auto-plain when piped (no TTY)
+npx mdzilla gh:unjs/h3 --plain         # List all pages in plain text
+```
 
 ### Keyboard Controls
 

@@ -3,6 +3,13 @@ import { execSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { parseArgs } from "node:util";
+
+// Gracefully handle broken pipes (e.g., `mdzilla ... | head`)
+process.stdout.on("error", (err: NodeJS.ErrnoException) => {
+  if (err.code === "EPIPE") process.exit(0);
+  throw err;
+});
+
 import { parseMeta, renderToText } from "md4x";
 import { isAgent } from "std-env";
 import { DocsManager } from "../docs/manager.ts";
@@ -594,19 +601,19 @@ async function plainMode(docs: DocsManager) {
     return;
   }
 
+  // Render first page content
+  const raw = await docs.getContent(navigable[0]!);
+  if (raw) {
+    process.stdout.write(renderToText(raw) + "\n\n");
+  }
+
   // Render TOC
   const tocLines: string[] = ["# Table of Contents", ""];
   for (const f of navigable) {
     const indent = "  ".repeat(f.depth);
     tocLines.push(`${indent}- [${f.entry.title}](${f.entry.path})`);
   }
-  process.stdout.write(tocLines.join("\n") + "\n\n---\n\n");
-
-  // Render first page content
-  const raw = await docs.getContent(navigable[0]!);
-  if (raw) {
-    process.stdout.write(renderToText(raw) + "\n");
-  }
+  process.stdout.write(tocLines.join("\n") + "\n");
 }
 
 async function _resolvePagePath(
