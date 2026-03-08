@@ -41,7 +41,7 @@ test/
 
 See [.agents/NAV.md](.agents/NAV.md) for full Nav scanner expected behavior.
 
-- **Numbered prefixes** for ordering: `1.guide/`, `2.utils/`, `0.index.md`
+- **Numbered prefixes** for ordering: `1.guide/`, `2.utils/`, `0.index.md` (can be overridden via frontmatter `order` or `navigation.order`)
 - **`.navigation.yml`** in directories for title/icon metadata
 - **Frontmatter** in `.md` files for page-level metadata (icon, description)
 - **`index.md` or `0.index.md`** as directory index pages (slug becomes `""`)
@@ -49,7 +49,7 @@ See [.agents/NAV.md](.agents/NAV.md) for full Nav scanner expected behavior.
 - **`_` prefixed** files/dirs are partials, excluded from navigation
 - **`.draft.md`** suffix marks drafts (excluded by default, opt-in via `drafts` option)
 - **`navigation: false`** in frontmatter or `.navigation.yml` excludes from tree
-- **`navigation: { title, icon }`** in frontmatter overrides nav-specific fields
+- **`navigation: { title, icon, order }`** in frontmatter overrides nav-specific fields
 
 ### CLI
 

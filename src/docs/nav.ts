@@ -190,6 +190,7 @@ async function _scanNav(
       // Skip if navigation: false
       if (meta.navigation === false) continue;
 
+      const resolvedOrder = typeof meta.order === "number" ? meta.order : order;
       const resolvedSlug = slug === "index" ? "" : slug;
       const title = (meta.title as string) || humanizeSlug(slug) || "index";
 
@@ -208,7 +209,7 @@ async function _scanNav(
         slug: resolvedSlug,
         path: entryPath,
         title,
-        order,
+        order: resolvedOrder,
         ...(meta.icon ? { icon: meta.icon as string } : {}),
         ...(meta.description ? { description: meta.description as string } : {}),
         ...(draft ? { draft: true } : {}),

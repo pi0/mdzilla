@@ -32,6 +32,7 @@ interface NavEntry {
 - Numeric prefix determines order: `1.guide/`, `2.utils/`, `0.index.md`
 - Prefix is stripped from slug: `1.guide` → slug `"guide"`
 - Unnumbered items get `order: Infinity`, sorted alphabetically after numbered ones
+- Frontmatter `order` (or `navigation.order`) overrides the filename-derived order
 
 ### Index Files
 

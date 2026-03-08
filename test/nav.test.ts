@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { fileURLToPath } from "node:url";
 import { resolve, dirname } from "node:path";
+import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { scanNav, parseNumberedName, humanizeSlug } from "../src/docs/nav.ts";
 
 const fixtureDir = resolve(dirname(fileURLToPath(import.meta.url)), "docs");
@@ -158,5 +161,35 @@ describe("scanNav", () => {
   it("excludes _ prefixed dirs", async () => {
     const nav = await scanNav(simpleFixtureDir);
     expect(nav.find((e) => e.slug === "partials")).toBeUndefined();
+  });
+
+  it("respects frontmatter order override", async () => {
+    const tmp = await mkdtemp(join(tmpdir(), "nav-order-"));
+    try {
+      await writeFile(join(tmp, "alpha.md"), "---\norder: 1\n---\n# Alpha\n");
+      await writeFile(join(tmp, "beta.md"), "---\norder: 0\n---\n# Beta\n");
+      await writeFile(join(tmp, "gamma.md"), "# Gamma\n");
+      const nav = await scanNav(tmp);
+      expect(nav.map((e) => e.slug)).toEqual(["beta", "alpha", "gamma"]);
+      expect(nav[0]!.order).toBe(0);
+      expect(nav[1]!.order).toBe(1);
+      expect(nav[2]!.order).toBe(Infinity);
+    } finally {
+      await rm(tmp, { recursive: true });
+    }
+  });
+
+  it("respects navigation.order override", async () => {
+    const tmp = await mkdtemp(join(tmpdir(), "nav-order-"));
+    try {
+      await writeFile(join(tmp, "3.first.md"), "---\nnavigation:\n  order: 0\n---\n# First\n");
+      await writeFile(join(tmp, "1.second.md"), "# Second\n");
+      const nav = await scanNav(tmp);
+      expect(nav.map((e) => e.slug)).toEqual(["first", "second"]);
+      expect(nav[0]!.order).toBe(0);
+      expect(nav[1]!.order).toBe(1);
+    } finally {
+      await rm(tmp, { recursive: true });
+    }
   });
 });
