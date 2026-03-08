@@ -32,7 +32,7 @@
   "dependencies": {
     "@speed-highlight/core": "^1.2.14",
     "giget": "^3.1.2",
-    "md4x": ">=0.0.21",
+    "md4x": ">=0.0.22",
     "mdream": "^0.16.0",
     "std-env": "4.0.0-rc.1"
   },

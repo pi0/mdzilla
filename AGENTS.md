@@ -104,7 +104,7 @@ interface ScanNavOptions {
 
 - `DocsExporter` — abstract base class
 - `DocsExporterFS` — export flat entries to `<outdir>/<path>.md`
-  - `ExportOptions` — `{ includeStubs?: boolean }`
+  - `ExportOptions` — `{ filter?: (entry: FlatEntry) => boolean }`
 
 ### Internal Utilities (not exported)
 

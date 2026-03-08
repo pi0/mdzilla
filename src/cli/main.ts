@@ -3,7 +3,7 @@ import { parseArgs } from "node:util";
 import { isAgent } from "std-env";
 import { DocsManager } from "../docs/manager.ts";
 import { DocsSourceFS, DocsSourceGit, DocsSourceHTTP, DocsSourceNpm } from "../docs/source.ts";
-import { DocsExporterFS } from "../docs/exporter.ts";
+import { exportDocsToFS } from "../docs/exporter.ts";
 import { showCursor, leaveAltScreen } from "./_ansi.ts";
 import { printUsage } from "./_usage.ts";
 import { singleFileMode, pageMode, plainMode } from "./render.ts";
@@ -53,8 +53,7 @@ async function main() {
   await docs.load();
 
   if (exportDir) {
-    const exporter = new DocsExporterFS(exportDir);
-    await exporter.export(docs, { plainText: plain });
+    await exportDocsToFS(docs, exportDir, { plainText: plain });
     console.log(`Exported ${docs.pages.length} pages to ${exportDir}`);
     return;
   }

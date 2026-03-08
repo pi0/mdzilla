@@ -15,8 +15,8 @@ importers:
         specifier: ^3.1.2
         version: 3.1.2
       md4x:
-        specifier: '>=0.0.21'
-        version: 0.0.21
+        specifier: '>=0.0.22'
+        version: 0.0.22
       mdream:
         specifier: ^0.16.0
         version: 0.16.0
@@ -1214,8 +1214,8 @@ packages:
   md4w@0.2.7:
     resolution: {integrity: sha512-lFM7vwk3d4MzkV2mija7aPkK6OjKXZDQsH2beX+e2cvccBoqc6RraheMtAO0Wcr/gjj5L+WS5zhb+06AmuGZrg==}
 
-  md4x@0.0.21:
-    resolution: {integrity: sha512-8Q44rE3KNNTrV4BU4Qx9RQ1NLNoR8yBsKkr/YaUDkSNTfqECrd0rQhZHNyAwbVpcE1tO1exGOq6pYR8viOQrAQ==}
+  md4x@0.0.22:
+    resolution: {integrity: sha512-jUI7AES+9/xq3gqxbz4Bkj/BGQ6ndtE4apvi7hu6zeixwfcDS+JaflKIckc81e81W5gk7Gg0XRCTBzxZEVXPBw==}
     hasBin: true
 
   mdbox@0.1.1:
@@ -2368,7 +2368,7 @@ snapshots:
 
   md4w@0.2.7: {}
 
-  md4x@0.0.21: {}
+  md4x@0.0.22: {}
 
   mdbox@0.1.1:
     dependencies:

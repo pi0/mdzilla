@@ -129,7 +129,7 @@ All styling uses raw escape sequences — no chalk/colorette dependency:
 ### Exporter (`src/docs/exporter.ts`)
 
 - `DocsExporterFS` — export flat entries as `<outdir>/<path>.md`
-- `ExportOptions.includeStubs` — include directory entries with `page: false`
+- `ExportOptions.filter` — custom callback `(entry: FlatEntry) => boolean` to filter entries (default: skip stubs)
 
 ### Link Navigation
 

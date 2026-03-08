@@ -16,6 +16,6 @@ export type {
   DocsSourceNpmOptions,
 } from "./docs/source.ts";
 
-export { DocsExporter, DocsExporterFS } from "./docs/exporter.ts";
+export { exportDocsToFS } from "./docs/exporter.ts";
 
 export type { ExportOptions } from "./docs/exporter.ts";
