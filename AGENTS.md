@@ -123,6 +123,7 @@ When CLI options, modes, or usage patterns change, keep these in sync:
 
 - **`src/cli/main.ts`** — `parseArgs` options and the help text printed on `--help`
 - **`README.md`** — Quick Start, Features tables, and Options sections
+- **`skills/mdzilla/SKILL.md`** — Agent skill documentation (options, examples)
 - **This file** — CLI Modes section below
 
 ### Modes
@@ -134,6 +135,7 @@ pnpm mdzilla gh:owner/repo       # browse GitHub repo docs
 pnpm mdzilla npm:package-name    # browse npm package docs
 pnpm mdzilla https://example.com # browse remote docs via HTTP
 pnpm mdzilla <dir> --export <out> # export docs to flat .md files
+pnpm mdzilla <source> --page /path # print a single page and exit
 ```
 
 ## Testing

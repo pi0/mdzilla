@@ -33,6 +33,7 @@ npx mdzilla <source> [options]
 ### Options
 
 - `--export <dir>` — Export docs to flat `.md` files
+- `--page <path>` / `-p <path>` — Print a single page by path and exit
 - `--plain` / `--headless` — Plain text output (no TUI); auto-enabled for AI agents or non-TTY stdout
 
 ### Agent usage
@@ -41,6 +42,7 @@ Always use `--plain` when calling from scripts or agents:
 
 ```sh
 npx mdzilla gh:unjs/h3 --plain
+npx mdzilla gh:unjs/h3 --plain --page /guide/basics
 npx mdzilla https://h3.unjs.io --plain
 npx mdzilla npm:consola --plain
 ```

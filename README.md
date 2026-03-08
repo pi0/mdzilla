@@ -56,6 +56,15 @@ Flatten any docs source into plain `.md` files:
 npx mdzilla <source> --export <outdir>
 ```
 
+### Single Page
+
+Print a specific page by path and exit:
+
+```sh
+npx mdzilla gh:nuxt/nuxt --page /getting-started/seo-meta
+npx mdzilla gh:nuxt/nuxt --plain --page /getting-started/seo-meta
+```
+
 ### Headless Mode
 
 Use `--plain` for non-interactive output — auto-enabled when called by AI agents or when stdout is not a TTY.

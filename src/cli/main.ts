@@ -28,6 +28,7 @@ async function main() {
     options: {
       help: { type: "boolean", short: "h" },
       export: { type: "string" },
+      page: { type: "string", short: "p" },
       plain: { type: "boolean", default: isAgent || !process.stdout.isTTY },
       headless: { type: "boolean" },
     },
@@ -64,6 +65,7 @@ async function main() {
         "",
         `${bold("Options:")}`,
         `  ${cyan("--export")} ${dim("<dir>")}   Export docs to flat .md files`,
+        `  ${cyan("--page")} ${dim("<path>")}    Print a single page and exit`,
         `  ${cyan("--plain")}          Plain text output (no TUI)`,
         `  ${cyan("--headless")}       Alias for --plain`,
         `  ${cyan("-h, --help")}       Show this help message`,
@@ -78,15 +80,17 @@ async function main() {
     process.exit(docsDir ? 0 : 1);
   }
 
+  const isURL =
+    docsDir.startsWith("http://") || docsDir.startsWith("https://");
+
   // Single .md file mode
   if (docsDir.endsWith(".md")) {
-    return singleFileMode(docsDir, plain);
+    return singleFileMode(docsDir, plain, isURL);
   }
 
-  const source =
-    docsDir.startsWith("http://") || docsDir.startsWith("https://")
-      ? new DocsSourceHTTP(docsDir)
-      : docsDir.startsWith("gh:")
+  const source = isURL
+    ? new DocsSourceHTTP(docsDir)
+    : docsDir.startsWith("gh:")
         ? new DocsSourceGit(docsDir)
         : docsDir.startsWith("npm:")
           ? new DocsSourceNpm(docsDir)
@@ -101,6 +105,10 @@ async function main() {
       `Exported ${docs.flat.filter((f) => f.entry.page !== false).length} pages to ${exportDir}`,
     );
     return;
+  }
+
+  if (values.page) {
+    return pageMode(docs, values.page, plain);
   }
 
   if (plain) {
@@ -532,20 +540,44 @@ async function main() {
   }
 }
 
-async function singleFileMode(filePath: string, plain?: boolean) {
-  const raw = await readFile(filePath, "utf8");
+async function singleFileMode(filePath: string, plain?: boolean, isURL?: boolean) {
+  const raw = isURL
+    ? await fetch(filePath, { headers: { accept: "text/markdown, text/plain;q=0.9, text/html;q=0.8" } }).then((r) => r.text())
+    : await readFile(filePath, "utf8");
   if (plain) {
     process.stdout.write(renderToText(raw) + "\n");
     return;
   }
   const meta = parseMeta(raw);
-  const slug = basename(filePath, ".md");
+  const slug = isURL
+    ? new URL(filePath).pathname.split("/").pop()?.replace(/\.md$/i, "") || "page"
+    : basename(filePath, ".md");
   const lines = await renderContent(
     raw,
     { slug, path: "/" + slug, title: meta.title || slug, order: 0 },
     0,
   );
   process.stdout.write(lines.join("\n") + "\n");
+}
+
+async function pageMode(docs: DocsManager, pagePath: string, plain?: boolean) {
+  const normalized = pagePath.startsWith("/") ? pagePath : "/" + pagePath;
+  const { entry, raw } = await _resolvePagePath(docs, normalized);
+
+  if (!raw) {
+    console.error(`Page not found: ${pagePath}`);
+    process.exit(1);
+  }
+
+  const slug = (entry?.entry.path || normalized).split("/").pop() || "";
+  const navEntry = entry?.entry || { slug, path: normalized, title: parseMeta(raw).title || slug, order: 0 };
+
+  if (plain) {
+    process.stdout.write(renderToText(raw) + "\n");
+  } else {
+    const lines = await renderContent(raw, navEntry, 0);
+    process.stdout.write(lines.join("\n") + "\n");
+  }
 }
 
 async function plainMode(docs: DocsManager) {
@@ -569,6 +601,37 @@ async function plainMode(docs: DocsManager) {
   if (raw) {
     process.stdout.write(renderToText(raw) + "\n");
   }
+}
+
+async function _resolvePagePath(
+  docs: DocsManager,
+  path: string,
+): Promise<{ entry?: FlatEntry; raw?: string }> {
+  const _find = (p: string) =>
+    docs.flat.find((f) => f.entry.page !== false && (f.entry.path === p || f.entry.path === p + "/"));
+
+  // Try exact match first
+  const entry = _find(path);
+  if (entry) {
+    const raw = await docs.getContent(entry);
+    if (raw) return { entry, raw };
+  }
+
+  // Try stripping common prefixes (e.g. /docs/guide/... → /guide/...)
+  const prefixed = path.match(/^\/[^/]+(\/.+)$/);
+  if (prefixed) {
+    const stripped = _find(prefixed[1]!);
+    if (stripped) {
+      const raw = await docs.getContent(stripped);
+      if (raw) return { entry: stripped, raw };
+    }
+  }
+
+  // Fallback: fetch directly from source (works for HTTP sources with uncrawled paths)
+  const raw = await docs.source.readContent(path).catch(() => undefined);
+  if (raw) return { raw };
+
+  return {};
 }
 
 main().catch((err) => {
