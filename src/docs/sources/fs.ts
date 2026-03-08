@@ -18,6 +18,7 @@ export class DocsSourceFS extends DocsSource {
     fileMap: Map<string, string>;
   }> {
     const tree = await scanNav(this.dir);
+    await applyNavManifest(tree, this.dir);
     const fileMap = await buildFileMap("/", this.dir);
     return { tree, fileMap };
   }
@@ -62,4 +63,37 @@ async function buildFileMap(parentPath: string, dirPath: string): Promise<Map<st
     }
   }
   return map;
+}
+
+/**
+ * Read `_navigation.json` manifest (exported by mdzilla) and apply its
+ * ordering to the scanned nav tree. Only reorders; does not add/remove entries.
+ */
+async function applyNavManifest(tree: NavEntry[], dir: string): Promise<void> {
+  let manifest: NavEntry[];
+  try {
+    manifest = JSON.parse(await readFile(join(dir, "_navigation.json"), "utf8"));
+  } catch {
+    return;
+  }
+  reorderTree(tree, manifest);
+}
+
+/** Recursively reorder tree entries to match manifest ordering. */
+function reorderTree(entries: NavEntry[], manifest: NavEntry[]): void {
+  const pathIndex = new Map(manifest.map((m, i) => [m.path, i]));
+  entries.sort((a, b) => {
+    const ai = pathIndex.get(a.path) ?? Infinity;
+    const bi = pathIndex.get(b.path) ?? Infinity;
+    return ai - bi;
+  });
+
+  for (const entry of entries) {
+    if (entry.children?.length) {
+      const manifestEntry = manifest.find((m) => m.path === entry.path);
+      if (manifestEntry?.children) {
+        reorderTree(entry.children, manifestEntry.children);
+      }
+    }
+  }
 }

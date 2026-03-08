@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { renderToMarkdown, renderToText } from "md4x";
 import type { DocsManager, FlatEntry } from "./manager.ts";
+import type { NavEntry } from "./nav.ts";
 
 export interface ExportOptions {
   /** Custom filter callback. Return false to skip an entry. Default: skip stubs (page === false) */
@@ -23,8 +24,9 @@ const IGNORED_PATHS = new Set(["/llms.txt", "/llms-full.txt"]);
 /**
  * Export documentation entries to a local filesystem directory as flat `.md` files.
  *
- * Each entry is written to `<dir>/<path>.md`. Directory stubs (`page === false`)
- * are skipped by default unless a custom `filter` is provided.
+ * Each entry is written to `<dir>/<path>.md` (or `<dir>/<path>/index.md` for directory
+ * index pages). Navigation order is preserved via `order` frontmatter in pages and
+ * `.navigation.yml` files in directories.
  *
  * A `README.md` table of contents is generated at the root of the output directory.
  */
@@ -38,6 +40,10 @@ export async function exportDocsToFS(
   const tocLines: string[] = [`# ${tocTitle}`, ""];
   const writtenFiles = new Set<string>();
 
+  // Collect directory paths (entries with children) to fix file placement
+  const dirPaths = new Set<string>();
+  collectDirPaths(manager.tree, dirPaths);
+
   for (const flat of manager.flat) {
     if (options.filter ? !options.filter(flat) : flat.entry.page === false) continue;
 
@@ -48,12 +54,15 @@ export async function exportDocsToFS(
 
     const cleanContent = options.plainText ? renderToText(content) : renderToMarkdown(content);
 
-    const filePath =
-      flat.entry.path === "/"
+    // Directory index pages go to <dir>/index.md to avoid conflicting with the directory
+    const isIndex = flat.entry.path === "/" || dirPaths.has(flat.entry.path);
+    const filePath = isIndex
+      ? flat.entry.path === "/"
         ? "/index.md"
-        : flat.entry.path.endsWith(".md")
-          ? flat.entry.path
-          : `${flat.entry.path}.md`;
+        : `${flat.entry.path}/index.md`
+      : flat.entry.path.endsWith(".md")
+        ? flat.entry.path
+        : `${flat.entry.path}.md`;
     const dest = join(dir, filePath);
 
     await mkdir(dirname(dest), { recursive: true });
@@ -71,4 +80,21 @@ export async function exportDocsToFS(
     tocFile = `_${tocFile}`;
   }
   await writeFile(join(dir, tocFile), tocLines.join("\n") + "\n", "utf8");
+
+  // Write navigation manifest preserving full tree structure
+  await writeFile(
+    join(dir, "_navigation.json"),
+    JSON.stringify(manager.tree, null, 2) + "\n",
+    "utf8",
+  );
+}
+
+/** Collect all paths that are directories (have children in the tree). */
+function collectDirPaths(entries: NavEntry[], set: Set<string>): void {
+  for (const entry of entries) {
+    if (entry.children?.length) {
+      set.add(entry.path);
+      collectDirPaths(entry.children, set);
+    }
+  }
 }
