@@ -1,0 +1,35 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renderJSDocsMarkdown > renders entries as markdown 1`] = `
+"### \`add\`
+
+\`\`\`ts
+export function add(a: number, b: number): number
+\`\`\`
+
+Add two numbers.
+
+**Parameters:**
+
+- **\`a\`** — First number
+- **\`b\`** — Second number
+
+**Returns:** — The sum
+
+**Example:**
+
+\`\`\`ts
+add(1, 2) // 3
+\`\`\`
+
+---
+
+### \`User\`
+
+\`\`\`ts
+export interface User
+\`\`\`
+
+User object.
+"
+`;

@@ -1,0 +1,52 @@
+{
+  "name": "mdzilla",
+  "version": "0.0.0",
+  "description": "",
+  "license": "MIT",
+  "repository": "pi0/mdzilla",
+  "bin": {
+    "mdz": "./dist/cli/main.mjs",
+    "mdzilla": "./dist/cli/main.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": "./dist/index.mjs"
+  },
+  "scripts": {
+    "build": "obuild",
+    "dev": "vitest dev",
+    "fmt": "automd && oxlint . --fix && oxfmt .",
+    "lint": "oxlint . && oxfmt --check .",
+    "prepack": "pnpm build",
+    "mdzilla": "node src/cli/main.ts",
+    "mdz": "node src/cli/main.ts",
+    "release": "pnpm test && pnpm build && changelogen --release && npm publish && git push --follow-tags",
+    "test": "pnpm lint && pnpm typecheck && vitest run --coverage",
+    "typecheck": "tsgo --noEmit --skipLibCheck"
+  },
+  "dependencies": {
+    "@speed-highlight/core": "^1.2.14",
+    "giget": "^3.1.2",
+    "md4x": ">=0.0.21",
+    "mdream": "^0.16.0",
+    "std-env": "4.0.0-rc.1"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@typescript/native-preview": "latest",
+    "@vitest/coverage-v8": "latest",
+    "automd": "latest",
+    "changelogen": "latest",
+    "obuild": "latest",
+    "oxfmt": "latest",
+    "oxlint": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  },
+  "packageManager": "pnpm@10.29.3"
+}
