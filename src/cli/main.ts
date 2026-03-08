@@ -80,8 +80,7 @@ async function main() {
     process.exit(docsDir ? 0 : 1);
   }
 
-  const isURL =
-    docsDir.startsWith("http://") || docsDir.startsWith("https://");
+  const isURL = docsDir.startsWith("http://") || docsDir.startsWith("https://");
 
   // Single .md file mode
   if (docsDir.endsWith(".md")) {
@@ -91,10 +90,10 @@ async function main() {
   const source = isURL
     ? new DocsSourceHTTP(docsDir)
     : docsDir.startsWith("gh:")
-        ? new DocsSourceGit(docsDir)
-        : docsDir.startsWith("npm:")
-          ? new DocsSourceNpm(docsDir)
-          : new DocsSourceFS(docsDir);
+      ? new DocsSourceGit(docsDir)
+      : docsDir.startsWith("npm:")
+        ? new DocsSourceNpm(docsDir)
+        : new DocsSourceFS(docsDir);
   const docs = new DocsManager(source);
   await docs.load();
 
@@ -542,7 +541,9 @@ async function main() {
 
 async function singleFileMode(filePath: string, plain?: boolean, isURL?: boolean) {
   const raw = isURL
-    ? await fetch(filePath, { headers: { accept: "text/markdown, text/plain;q=0.9, text/html;q=0.8" } }).then((r) => r.text())
+    ? await fetch(filePath, {
+        headers: { accept: "text/markdown, text/plain;q=0.9, text/html;q=0.8" },
+      }).then((r) => r.text())
     : await readFile(filePath, "utf8");
   if (plain) {
     process.stdout.write(renderToText(raw) + "\n");
@@ -570,7 +571,12 @@ async function pageMode(docs: DocsManager, pagePath: string, plain?: boolean) {
   }
 
   const slug = (entry?.entry.path || normalized).split("/").pop() || "";
-  const navEntry = entry?.entry || { slug, path: normalized, title: parseMeta(raw).title || slug, order: 0 };
+  const navEntry = entry?.entry || {
+    slug,
+    path: normalized,
+    title: parseMeta(raw).title || slug,
+    order: 0,
+  };
 
   if (plain) {
     process.stdout.write(renderToText(raw) + "\n");
@@ -608,7 +614,9 @@ async function _resolvePagePath(
   path: string,
 ): Promise<{ entry?: FlatEntry; raw?: string }> {
   const _find = (p: string) =>
-    docs.flat.find((f) => f.entry.page !== false && (f.entry.path === p || f.entry.path === p + "/"));
+    docs.flat.find(
+      (f) => f.entry.page !== false && (f.entry.path === p || f.entry.path === p + "/"),
+    );
 
   // Try exact match first
   const entry = _find(path);
