@@ -14,7 +14,9 @@ Markdown browser for humans and agents.
 
 > Browse docs from local directories, GitHub repos, and remote websites — all from your terminal. Built on [md4x](https://github.com/unjs/md4x), [mdream](https://github.com/harlan-zw/mdream), [giget](https://github.com/unjs/giget) and [speed-highlight](https://github.com/speed-highlight/core).
 
-Works best with [Docus](https://docus.dev) and [Undocs](https://undocs.pages.dev/) sources or any website supporting [`/llms.txt`](https://llmstxt.org/).
+Supports any website with [`/llms.txt`](https://llmstxt.org/) or markdown content negotiation.
+
+Works best with [Docus](https://docus.dev)/[Undocs](https://undocs.pages.dev/) docs sources.
 
 ## Quick Start
 
@@ -24,6 +26,14 @@ npx mdzilla <file.md>             # Render a single markdown file
 npx mdzilla gh:owner/repo         # Browse GitHub repo docs
 npx mdzilla npm:package-name      # Browse npm package docs
 npx mdzilla https://example.com   # Browse remote docs via HTTP
+```
+
+## Agent Skill
+
+Install the mdzilla skill for AI agents using:
+
+```sh
+npx skills install pi0/mdzilla
 ```
 
 ## Features
