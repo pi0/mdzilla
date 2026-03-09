@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.5
+
+[compare changes](https://github.com/pi0/mdzilla/compare/v0.0.4...v0.0.5)
+
+### 🚀 Enhancements
+
+- Web viewer ([2d87dc0](https://github.com/pi0/mdzilla/commit/2d87dc0))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.0.4
 
 [compare changes](https://github.com/pi0/mdzilla/compare/v0.0.3...v0.0.4)
