@@ -13,7 +13,7 @@ export default defineConfig({
     preset: "standard",
     serverDir: "./server",
     entry: "./server/entry.ts",
-    // minify: true,
+    minify: true,
     serveStatic: "inline",
     inlineDynamicImports: true,
   },
