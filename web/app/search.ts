@@ -55,7 +55,7 @@ export function initSearch() {
       setActive(activeIndex - 1);
     } else if (e.key === "Enter" && activeIndex >= 0) {
       e.preventDefault();
-      navigate(results[activeIndex].path);
+      navigate(results[activeIndex]!.path);
     } else if (e.key === "Escape") {
       close();
     }
@@ -148,7 +148,7 @@ export function initSearch() {
       el.addEventListener("click", (e) => {
         e.preventDefault();
         const idx = Number((el as HTMLElement).dataset.index);
-        navigate(results[idx].path);
+        navigate(results[idx]!.path);
       });
     });
   }
