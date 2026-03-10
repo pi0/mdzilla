@@ -1,5 +1,5 @@
-import { execSync } from "node:child_process";
 import type { DocsManager, FlatEntry } from "../../docs/manager.ts";
+import { openInBrowser } from "../_utils.ts";
 import {
   clear,
   enterAltScreen,
@@ -281,9 +281,7 @@ export async function interactiveMode(docs: DocsManager) {
 
   const activateLink = (url: string) => {
     if (url.startsWith("http://") || url.startsWith("https://")) {
-      try {
-        execSync(`open ${JSON.stringify(url)}`, { stdio: "ignore" });
-      } catch {}
+      openInBrowser(url);
     } else {
       const target = url.replace(/^\.\//, "/").replace(/\/$/, "");
       const idx = flat.indexOf(docs.findByPath(target)!);
