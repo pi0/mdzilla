@@ -39,7 +39,13 @@ async function buildFileMap(parentPath: string, dirPath: string): Promise<Map<st
   const entries = await readdir(dirPath, { withFileTypes: true });
 
   for (const entry of entries) {
-    if (entry.name.startsWith(".") || entry.name.startsWith("_") || entry.name === "node_modules" || entry.name === "dist") continue;
+    if (
+      entry.name.startsWith(".") ||
+      entry.name.startsWith("_") ||
+      entry.name === "node_modules" ||
+      entry.name === "dist"
+    )
+      continue;
 
     const fullPath = join(dirPath, entry.name);
 
