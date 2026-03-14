@@ -1,4 +1,4 @@
-import { exec } from "node:child_process";
+import { exec, execFile } from "node:child_process";
 
 export function openInBrowser(url: string): void {
   const parsed = new URL(url);
@@ -10,11 +10,12 @@ export function openInBrowser(url: string): void {
     parsed.hostname = "localhost";
   }
   url = parsed.href;
-  const cmd =
-    process.platform === "win32"
-      ? `start ${url}`
-      : process.platform === "darwin"
-        ? `open ${url}`
-        : `xdg-open ${url}`;
-  exec(cmd, () => {});
+  if (process.platform === "win32") {
+    // `start` is a cmd.exe builtin, needs shell - quote the URL
+    exec(`start "" ${JSON.stringify(url)}`, () => {});
+  } else {
+    // execFile bypasses the shell, so URLs with & ; etc. are safe
+    const bin = process.platform === "darwin" ? "open" : "xdg-open";
+    execFile(bin, [url], () => {});
+  }
 }
