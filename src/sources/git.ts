@@ -2,23 +2,23 @@ import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Source } from "./_base.ts";
-import { SourceFS } from "./fs.ts";
+import { FSSource } from "./fs.ts";
 import type { NavEntry } from "../nav.ts";
 
-export interface SourceGitOptions {
+export interface GitSourceOptions {
   /** Authorization token for private repos */
   auth?: string;
   /** Subdirectory within the repo containing docs */
   subdir?: string;
 }
 
-export class SourceGit extends Source {
+export class GitSource extends Source {
   src: string;
-  options: SourceGitOptions;
+  options: GitSourceOptions;
 
-  private _fs?: SourceFS;
+  private _fs?: FSSource;
 
-  constructor(src: string, options: SourceGitOptions = {}) {
+  constructor(src: string, options: GitSourceOptions = {}) {
     super();
     this.src = src;
     this.options = options;
@@ -50,13 +50,13 @@ export class SourceGit extends Source {
       }
     }
 
-    this._fs = new SourceFS(docsDir);
+    this._fs = new FSSource(docsDir);
     return this._fs.load();
   }
 
   async readContent(filePath: string): Promise<string> {
     if (!this._fs) {
-      throw new Error("SourceGit: call load() before readContent()");
+      throw new Error("GitSource: call load() before readContent()");
     }
     return this._fs.readContent(filePath);
   }

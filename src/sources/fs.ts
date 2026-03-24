@@ -5,7 +5,7 @@ import { join, extname } from "node:path";
 import { Source } from "./_base.ts";
 import type { NavEntry } from "../nav.ts";
 
-export class SourceFS extends Source {
+export class FSSource extends Source {
   dir: string;
 
   constructor(dir: string) {

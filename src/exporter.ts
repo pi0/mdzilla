@@ -31,7 +31,7 @@ const IGNORED_PATHS = new Set(["/llms.txt", "/llms-full.txt"]);
  *
  * A `README.md` table of contents is generated at the root of the output directory.
  */
-export async function exportDocsToFS(
+export async function exportToFS(
   collection: Collection,
   dir: string,
   options: ExportOptions = {},

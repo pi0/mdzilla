@@ -58,19 +58,19 @@ Then read the exported `.md` files as needed.
 ## Programmatic API
 
 ```js
-import { Collection, SourceFS, SourceGit, SourceHTTP, SourceNpm } from "mdzilla";
+import { Collection, FSSource, GitSource, HTTPSource, NpmSource } from "mdzilla";
 
 // Local filesystem
-const docs = new Collection(new SourceFS("./docs"));
+const docs = new Collection(new FSSource("./docs"));
 
 // GitHub repo
-const docs = new Collection(new SourceGit("unjs/h3"));
+const docs = new Collection(new GitSource("unjs/h3"));
 
 // npm package
-const docs = new Collection(new SourceNpm("h3"));
+const docs = new Collection(new NpmSource("h3"));
 
 // HTTP (llms.txt → markdown negotiation → HTML→md fallback)
-const docs = new Collection(new SourceHTTP("https://h3.unjs.io"));
+const docs = new Collection(new HTTPSource("https://h3.unjs.io"));
 
 await docs.load();
 console.log(docs.tree); // NavEntry[] navigation tree

@@ -2,22 +2,22 @@ import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Source } from "./_base.ts";
-import { SourceFS } from "./fs.ts";
+import { FSSource } from "./fs.ts";
 import { parseNpmSpec, fetchNpmInfo } from "./_npm.ts";
 import type { NavEntry } from "../nav.ts";
 
-export interface SourceNpmOptions {
+export interface NpmSourceOptions {
   /** Subdirectory within the package containing docs */
   subdir?: string;
 }
 
-export class SourceNpm extends Source {
+export class NpmSource extends Source {
   src: string;
-  options: SourceNpmOptions;
+  options: NpmSourceOptions;
 
-  private _fs?: SourceFS;
+  private _fs?: FSSource;
 
-  constructor(src: string, options: SourceNpmOptions = {}) {
+  constructor(src: string, options: NpmSourceOptions = {}) {
     super();
     this.src = src;
     this.options = options;
@@ -52,13 +52,13 @@ export class SourceNpm extends Source {
       }
     }
 
-    this._fs = new SourceFS(docsDir);
+    this._fs = new FSSource(docsDir);
     return this._fs.load();
   }
 
   async readContent(filePath: string): Promise<string> {
     if (!this._fs) {
-      throw new Error("SourceNpm: call load() before readContent()");
+      throw new Error("NpmSource: call load() before readContent()");
     }
     return this._fs.readContent(filePath);
   }

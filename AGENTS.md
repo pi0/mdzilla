@@ -11,13 +11,13 @@ src/
                       includes flattenTree(), fuzzyMatch(), fuzzyFilter() as internal helpers
   nav.ts            — Nav scanner using md4x parseMeta
   source.ts         — re-exports all sources for backwards compat
-  exporter.ts       — exportDocsToFS function
+  exporter.ts       — exportToFS function
   sources/
     _base.ts        — Source abstract base class
-    fs.ts           — SourceFS (local filesystem), includes buildFileMap()
-    git.ts          — SourceGit (GitHub via giget)
-    npm.ts          — SourceNpm (npm packages via giget)
-    http.ts         — SourceHTTP (remote HTTP/HTML→markdown, llms.txt support)
+    fs.ts           — FSSource (local filesystem), includes buildFileMap()
+    git.ts          — GitSource (GitHub via giget)
+    npm.ts          — NpmSource (npm packages via giget)
+    http.ts         — HTTPSource (remote HTTP/HTML→markdown, llms.txt support)
   cli/
     main.ts         — CLI app: state management, input handling, main loop
     content.ts      — content rendering (markdown → ANSI, code syntax highlighting)
@@ -90,17 +90,17 @@ interface ScanNavOptions {
 ### Sources
 
 - `Source` — abstract base class (`load()`, `readContent()`)
-- `SourceFS` — load from local filesystem directory
-- `SourceGit` — download from GitHub via giget, then read locally
-  - `SourceGitOptions` — `{ auth?: string, subdir?: string }`
-- `SourceNpm` — download npm package via giget, then read locally
-  - `SourceNpmOptions` — `{ subdir?: string }`
-- `SourceHTTP` — fetch pages over HTTP with `Accept: text/markdown`
-  - `SourceHTTPOptions` — `{ headers?: Record<string, string> }`
+- `FSSource` — load from local filesystem directory
+- `GitSource` — download from GitHub via giget, then read locally
+  - `GitSourceOptions` — `{ auth?: string, subdir?: string }`
+- `NpmSource` — download npm package via giget, then read locally
+  - `NpmSourceOptions` — `{ subdir?: string }`
+- `HTTPSource` — fetch pages over HTTP with `Accept: text/markdown`
+  - `HTTPSourceOptions` — `{ headers?: Record<string, string> }`
 
 ### Exporters
 
-- `exportDocsToFS` — export flat entries to `<outdir>/<path>.md`
+- `exportToFS` — export flat entries to `<outdir>/<path>.md`
   - `ExportOptions` — `{ filter?: (entry: FlatEntry) => boolean }`
 
 ### Internal Utilities (not exported)

@@ -20,8 +20,8 @@ pnpm mdzilla <dir> --export <out> # export docs to flat .md files
 - `src/cli/content.ts` — content renderer (markdown → ANSI with syntax highlighting)
 - `src/cli/render.ts` — compositor (combines sidebar + content, renders footer)
 - `src/collection.ts` — `Collection` class (tree loading, flat entries, file map, content cache, fuzzy search)
-- `src/source.ts` — `SourceFS` (local), `SourceGit` (GitHub via giget), `SourceHTTP` (remote HTTP with llms.txt)
-- `src/exporter.ts` — `exportDocsToFS` (export docs to flat .md files)
+- `src/source.ts` — `FSSource` (local), `GitSource` (GitHub via giget), `HTTPSource` (remote HTTP with llms.txt)
+- `src/exporter.ts` — `exportToFS` (export docs to flat .md files)
 
 ## Architecture
 
@@ -120,15 +120,15 @@ All styling uses raw escape sequences — no chalk/colorette dependency:
 
 ### Sources (`src/sources/`)
 
-- `SourceFS` — load from local filesystem directory
-- `SourceGit` — download from GitHub via giget, supports `auth` and `subdir` options
+- `FSSource` — load from local filesystem directory
+- `GitSource` — download from GitHub via giget, supports `auth` and `subdir` options
   - Downloads to `node_modules/.mdzilla/gh/<id>/`
-- `SourceHTTP` — fetch pages over HTTP; tries `/llms.txt` first, falls back to homepage link extraction
+- `HTTPSource` — fetch pages over HTTP; tries `/llms.txt` first, falls back to homepage link extraction
   - Sends `Accept: text/markdown` header
 
 ### Exporter (`src/exporter.ts`)
 
-- `exportDocsToFS` — export flat entries as `<outdir>/<path>.md`
+- `exportToFS` — export flat entries as `<outdir>/<path>.md`
 - `ExportOptions.filter` — custom callback `(entry: FlatEntry) => boolean` to filter entries (default: skip stubs)
 
 ### Link Navigation

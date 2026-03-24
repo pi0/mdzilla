@@ -3,21 +3,21 @@ import { Source } from "./_base.ts";
 import { parseNpmURL, fetchNpmInfo } from "./_npm.ts";
 import type { NavEntry } from "../nav.ts";
 
-export interface SourceHTTPOptions {
+export interface HTTPSourceOptions {
   /** Additional headers to send with each request */
   headers?: Record<string, string>;
 }
 
-export class SourceHTTP extends Source {
+export class HTTPSource extends Source {
   url: string;
-  options: SourceHTTPOptions;
+  options: HTTPSourceOptions;
 
   private _contentCache = new Map<string, string>();
   private _tree: NavEntry[] = [];
   private _fileMap = new Map<string, string>();
   private _npmPackage?: string;
 
-  constructor(url: string, options: SourceHTTPOptions = {}) {
+  constructor(url: string, options: HTTPSourceOptions = {}) {
     super();
     this.url = url.replace(/\/+$/, "");
     this._npmPackage = parseNpmURL(this.url);
