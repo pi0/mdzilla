@@ -1,6 +1,37 @@
 # Changelog
 
 
+## v0.1.0
+
+[compare changes](https://github.com/pi0/mdzilla/compare/v0.0.6...v0.1.0)
+
+### 🚀 Enhancements
+
+- Improve agent navigation ([01d6849](https://github.com/pi0/mdzilla/commit/01d6849))
+
+### 🩹 Fixes
+
+- **cli:** Use cross-platform helper for opening links in TUI ([#5](https://github.com/pi0/mdzilla/pull/5))
+
+### 💅 Refactors
+
+- ⚠️  Remove html fallback for now ([f05d5f9](https://github.com/pi0/mdzilla/commit/f05d5f9))
+
+### 🏡 Chore
+
+- Update deps ([116b23a](https://github.com/pi0/mdzilla/commit/116b23a))
+- Update deps ([a96e0e3](https://github.com/pi0/mdzilla/commit/a96e0e3))
+- Lint ([b80c2ff](https://github.com/pi0/mdzilla/commit/b80c2ff))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️  Remove html fallback for now ([f05d5f9](https://github.com/pi0/mdzilla/commit/f05d5f9))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Ori ([@oritwoen](https://github.com/oritwoen))
+
 ## v0.0.6
 
 [compare changes](https://github.com/pi0/mdzilla/compare/v0.0.5...v0.0.6)
