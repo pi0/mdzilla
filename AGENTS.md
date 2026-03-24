@@ -19,10 +19,12 @@ src/
     npm.ts          — NpmSource (npm packages via giget)
     http.ts         — HTTPSource (remote HTTP/HTML→markdown, llms.txt support)
   cli/
-    main.ts         — CLI app: state management, input handling, main loop
+    main.ts         — entry point: arg parsing, smart resolve routing
+    render.ts       — render modes (singleFile, renderPage, searchMode, tocMode, serverMode)
     content.ts      — content rendering (markdown → ANSI, code syntax highlighting)
-    render.ts       — compositor (renderSplit combines sidebar + content + footer)
-    interactive/    — TUI interactive mode
+    _ansi.ts        — ANSI escape helpers (bold, dim, wrapAnsi, highlight)
+    _usage.ts       — help text
+    _utils.ts       — browser opener utility
 test/
   nav.test.ts       — snapshot tests for Nav scanner
   fixture/          — simple test fixture (index, getting-started, api, drafts, partials)
@@ -51,7 +53,7 @@ See [.agents/NAV.md](.agents/NAV.md) for full Nav scanner expected behavior.
 
 ### CLI
 
-See [.agents/CLI.md](.agents/CLI.md) for interactive terminal browser design.
+See [.agents/CLI.md](.agents/CLI.md) for CLI architecture and render modes.
 
 ### md4x Usage
 
@@ -131,14 +133,14 @@ When CLI options, modes, or usage patterns change, keep these in sync:
 ### Modes
 
 ```bash
-pnpm mdzilla <dir>               # browse local docs directory
-pnpm mdzilla <file.md>           # render single markdown file
-pnpm mdzilla gh:owner/repo       # browse GitHub repo docs
-pnpm mdzilla npm:package-name    # browse npm package docs
-pnpm mdzilla https://example.com # browse remote docs via HTTP
-pnpm mdzilla <dir> --export <out> # export docs to flat .md files
-pnpm mdzilla <source> --page /path # print a single page and exit
+mdzilla <source>                    # open docs in browser (web server)
+mdzilla <source> <path>             # render a specific page
+mdzilla <source> <query>            # search docs
+mdzilla <file.md>                   # render single markdown file
+mdzilla <source> --export <outdir>  # export docs to flat .md files
 ```
+
+The second positional argument is smart-resolved: if it matches a nav path, the page is rendered; otherwise it's treated as a search query.
 
 ## Testing
 

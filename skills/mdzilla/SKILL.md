@@ -17,7 +17,7 @@ Markdown documentation browser for terminal and agents. Fetches and renders docs
 ## CLI
 
 ```sh
-npx mdzilla <source> [options]
+npx mdzilla <source> [query] [options]
 ```
 
 ### Sources
@@ -33,18 +33,22 @@ npx mdzilla <source> [options]
 ### Options
 
 - `--export <dir>` — Export docs to flat `.md` files
-- `--page <path>` / `-p <path>` — Print a single page by path and exit
-- `--plain` / `--headless` — Plain text output (no TUI); auto-enabled for AI agents or non-TTY stdout
+- `--plain` — Plain text output; auto-enabled for AI agents or non-TTY stdout
+
+### Smart Resolve
+
+The second positional argument is smart-resolved:
+
+1. If it matches a navigation path → renders that page
+2. Otherwise → searches titles and content
 
 ### Agent usage
 
-Always use `--plain` when calling from scripts or agents:
-
 ```sh
-npx mdzilla gh:unjs/h3 --plain
-npx mdzilla gh:unjs/h3 --plain --page /guide/basics
-npx mdzilla https://h3.unjs.io --plain
-npx mdzilla npm:consola --plain
+npx mdzilla gh:unjs/h3 /guide/basics        # render a specific page
+npx mdzilla gh:unjs/h3 router               # search for 'router'
+npx mdzilla https://h3.unjs.io /guide       # render page from URL
+npx mdzilla npm:consola --plain             # list all pages (plain)
 ```
 
 Export docs for offline processing:

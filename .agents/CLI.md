@@ -1,157 +1,99 @@
 # CLI (`src/cli/`)
 
-Interactive terminal docs browser. No external CLI dependencies — raw ANSI + `process.stdin` in raw mode.
+Documentation browser CLI. Renders pages, searches content, or opens a web server for interactive browsing.
 
 ## Usage
 
 ```bash
-pnpm mdzilla <dir>                # browse local docs directory
-pnpm mdzilla <file.md>            # render single markdown file
-pnpm mdzilla gh:owner/repo        # browse GitHub repo docs
-pnpm mdzilla https://example.com  # browse remote docs via HTTP
-pnpm mdzilla <dir> --export <out> # export docs to flat .md files
+mdzilla <source>                    # open docs in browser (web server)
+mdzilla <source> <path>             # render a specific page
+mdzilla <source> <query>            # search docs
+mdzilla <file.md>                   # render single markdown file
+mdzilla <source> --export <outdir>  # export docs to flat .md files
+mdzilla <source> --plain            # force plain text output
 ```
+
+The second positional argument is smart-resolved: if it matches a nav path, the page is rendered; otherwise it's treated as a search query.
 
 ## File Structure
 
-- `src/cli/main.ts` — app state, input handling, main loop (~510 LoC)
-- `src/cli/ansi.ts` — ANSI escape helpers (bold, dim, cyan, highlight, wrapAnsi, etc.)
-- `src/cli/nav.ts` — nav panel renderer (tree connectors, scroll, search highlights)
+- `src/cli/main.ts` — entry point: arg parsing, smart resolve routing
+- `src/cli/render.ts` — render modes (singleFile, renderPage, searchMode, tocMode, serverMode)
 - `src/cli/content.ts` — content renderer (markdown → ANSI with syntax highlighting)
-- `src/cli/render.ts` — compositor (combines sidebar + content, renders footer)
-- `src/collection.ts` — `Collection` class (tree loading, flat entries, file map, content cache, fuzzy search)
-- `src/source.ts` — `FSSource` (local), `GitSource` (GitHub via giget), `HTTPSource` (remote HTTP with llms.txt)
-- `src/exporter.ts` — `exportToFS` (export docs to flat .md files)
+- `src/cli/_ansi.ts` — ANSI escape helpers (bold, dim, cyan, wrapAnsi, highlight)
+- `src/cli/_usage.ts` — help text
+- `src/cli/_utils.ts` — browser opener utility
 
 ## Architecture
 
-Split-pane layout: nav tree on the left, content on the right. Content auto-loads as cursor moves.
+### Modes
+
+1. **Server** (default, no query) — starts srvx web server, opens browser
+2. **Render** (query matches nav path) — prints page content (ANSI or plain markdown)
+3. **Search** (query doesn't match nav) — searches titles + content, prints results
+4. **TOC** (plain, no query) — prints table of contents + first page
+5. **Export** (`--export`) — writes flat `.md` files
+6. **Single file** (input ends with `.md`) — renders one markdown file
+
+### Output Formats
+
+- **Colored** (TTY, not agent) — ANSI-styled output via md4x `renderToAnsi` + code highlighting
+- **Plain** (non-TTY, `isAgent`, or `--plain`) — raw markdown text + agent trailers
 
 ### Data Flow
 
 ```
 Collection (src/collection.ts)
   ├── .load()        → source.load() + flattenTree()
-  ├── .flat          → FlatEntry[] for rendering
-  ├── .getContent()  → cached file reads via source.readContent()
-  ├── .filter()      → fuzzy search (title + path)
-  ├── .matchIndices()→ substring match indices
-  └── .invalidate()  → clear content cache for a path
+  ├── .resolvePage() → exact match, prefix stripping, or direct fetch
+  ├── .search()      → async iterator: title + content matching
+  └── .filter()      → fuzzy search (title + path)
         ↓
-  main.ts (state machine + event loop)
-        ↓ renderSplit()
-  render.ts (compositor: sidebar + separator + content + footer)
-        ↓              ↓
-  nav.ts           content.ts
-  (tree panel)     (md → ANSI + code highlighting)
-        ↓              ↓
-     ansi.ts (styling, wrapping, highlighting)
+  main.ts (smart resolve: path → render, else → search)
+        ↓
+  render.ts (mode dispatch)
+        ↓
+  content.ts (md → ANSI + code highlighting)
+        ↓
+  _ansi.ts (styling, wrapping)
         ↓
   process.stdout.write()
 ```
 
-### Input Modes
+### Smart Resolve
 
-Four input modes controlled by boolean flags:
+The second positional argument goes through:
 
-1. **browse** (default) — nav tree focused, content auto-loads on cursor move
-2. **content** — content panel focused, ↑↓ scroll line-by-line
-3. **nav search** — filtered nav tree with live fuzzy query input
-4. **content search** — search within current page content, `n`/`N` to jump between matches
+1. `docs.resolvePage(query)` — exact path match (with prefix stripping fallback)
+2. If no match → `searchMode(docs, query)` — search titles and content
 
-### Key Bindings
+### Agent Integration
 
-**Browse:** `↑↓`/`jk` navigate, `enter`/`tab`/`→` focus content, `space`/`PgDn` page down, `b`/`PgUp` page up, `g`/`G` first/last, `/` search, `t` toggle sidebar, `q` quit
-
-**Content:** `↑↓`/`jk` scroll line-by-line, `space`/`PgDn` page down, `b`/`PgUp` page up, `g`/`G` top/bottom, `/` content search, `n`/`N` next/prev match, `t` toggle sidebar, `⌫`/`esc`/`tab` back to nav, `q` quit
-
-**Nav search:** type to fuzzy-filter (title + path), `↑↓` navigate results, `enter` confirm, `esc` cancel
-
-**Content search:** type to search, `↑↓` navigate matches (auto-scrolls to center), `enter` confirm, `esc` cancel (keeps matches for `n`/`N`)
-
-**Mouse:** click nav entry to select, click content area to focus, scroll wheel over nav/content to scroll (3-line steps)
+When `isAgent` is detected (or `--plain`):
+- Output is raw markdown (via `renderToText`)
+- Trailers appended with other available pages and usage hints
+- Search results include structured badges (title/content match counts)
 
 ## Module Details
 
-### ANSI Helpers (`ansi.ts`)
+### ANSI Helpers (`_ansi.ts`)
 
-All styling uses raw escape sequences — no chalk/colorette dependency:
+Raw escape sequences — no chalk/colorette dependency:
 
-- `bold`, `dim`, `cyan`, `yellow`, `bgGray` — style wrappers
+- `bold`, `dim`, `cyan`, `yellow` — style wrappers (disabled when `NO_COLOR`, non-TTY, or agent)
 - `stripAnsi` — regex strip for visible-length calculation
-- `ANSI_RE` — matches both CSI (`\x1B[...letter`) and OSC 8 hyperlinks (`\x1B]8;;url\x1B\\` or `\x1B]...\x07`)
-- `padTo(s, width)` — pads/truncates to exact visual width (ANSI-aware)
-- `truncateTo(s, width)` — truncates to max visual width
-- `wrapAnsi(s, width)` — ANSI-aware word wrapping with SGR + OSC 8 state propagation
-- `highlightAnsi(s, query)` — highlight matches in ANSI-styled string (reverse video)
+- `wrapAnsi(s, width)` — ANSI-aware wrapping with SGR + OSC 8 state propagation
 - `highlight(text, query)` — simple text highlight (bold yellow)
-
-### Sidebar (`nav.ts`)
-
-- `calcNavWidth(flat)` — optimal sidebar width (6–56 chars, max 20% terminal)
-- `renderNavPanel(flat, cursor, maxRows, width, search?, searchMatches?)` → `string[]`
-- Tree connectors: `│`, `├─`, `╰─` with proper continuation lines
-- Active entry: `bgGray` highlight; search matches: bold yellow
-- Scroll indicators (↑↓) with position counter
 
 ### Content (`content.ts`)
 
-- `renderContent(content, entry, navWidth)` → `Promise<string[]>`
-- Strips YAML frontmatter, extracts code blocks
-- Pre-highlights code blocks via `@speed-highlight/core/terminal` in parallel
+- `renderContent(content, entry)` → `Promise<string[]>`
+- Extracts code blocks, pre-highlights via `@speed-highlight/core/terminal` in parallel
 - Renders markdown via `md4x` `renderToAnsi()`
 - Post-replaces dim code blocks with highlighted versions
-- Wraps lines to content panel width
-
-### Compositor (`render.ts`)
-
-- `renderSplit(...)` → full screen string (nav + separator + content + footer)
-- Footer shows context-sensitive help for current mode
-- Separator `│` highlighted cyan when content focused
-- Supports toggling sidebar visibility
-- Re-exports `calcNavWidth` and `renderContent`
-
-### Collection (`src/collection.ts`)
-
-- `FlatEntry { entry: NavEntry, depth: number, filePath?: string }`
-- Delegates to `Source.load()` then `flattenTree()`
-- Content cache: lazy reads via `source.readContent()` with `Map<filePath, content>`
-- Search delegates to `fuzzyFilter()` (inlined in `collection.ts`)
-
-### Sources (`src/sources/`)
-
-- `FSSource` — load from local filesystem directory
-- `GitSource` — download from GitHub via giget, supports `auth` and `subdir` options
-  - Downloads to `node_modules/.mdzilla/gh/<id>/`
-- `HTTPSource` — fetch pages over HTTP; tries `/llms.txt` first, falls back to homepage link extraction
-  - Sends `Accept: text/markdown` header
-
-### Exporter (`src/exporter.ts`)
-
-- `exportToFS` — export flat entries as `<outdir>/<path>.md`
-- `ExportOptions.filter` — custom callback `(entry: FlatEntry) => boolean` to filter entries (default: skip stubs)
-
-### Link Navigation
-
-Content mode supports interactive links:
-
-- `Tab` / `Shift+Tab` — cycle through links in content
-- `Enter` on a link — activate (external: open in browser, relative: navigate to entry)
-- Links are extracted from rendered content and tracked as `contentLinks[]`
-
-## Key Design Decisions
-
-- **No dependencies**: raw stdin + ANSI escapes keep it zero-dep for terminal control
-- **Split pane, not modal**: nav + content always visible; no separate "page mode"
-- **Auto-loading content**: async file read on cursor change; skips if same file already loaded
-- **Collection abstraction**: tree scanning, file mapping, content caching, and fuzzy search in one class
-- **Two-pass code highlighting**: extract & highlight code blocks separately, then post-replace in rendered output
-- **Flat list for navigation**: tree is flattened with depth tracking for indent, simplifies cursor/scroll logic
-- **Search confirms then returns to full tree**: enter in search jumps cursor to the matched entry in the unfiltered list
-- **State-driven rendering**: all UI derived from state; `draw()` re-renders entire screen
+- Wraps lines to terminal width
 
 ## ANSI Gotchas
 
-- **OSC 8 hyperlinks**: md4x `renderToAnsi` emits `\x1B]8;;url\x1B\\` (ST terminator, not BEL `\x07`). All ANSI stripping/tokenizing must handle both terminators.
-- **Style leaking in split layout**: each row must reset styles (`\x1B[0m`) between nav panel, separator, and content panel. Content lines must be self-contained (reset at end).
-- **Wrap with style propagation**: `wrapAnsi` must close and reopen both SGR styles and OSC 8 hyperlinks at line break points, otherwise underlines/colors leak to the nav panel on the next row.
+- **OSC 8 hyperlinks**: md4x emits `\x1B]8;;url\x1B\\` (ST terminator, not BEL). ANSI stripping must handle both.
+- **Wrap with style propagation**: `wrapAnsi` must close and reopen both SGR styles and OSC 8 hyperlinks at break points.

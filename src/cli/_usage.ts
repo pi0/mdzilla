@@ -1,5 +1,6 @@
 import { bold, cyan, dim } from "./_ansi.ts";
 import { isAgent } from "std-env";
+
 export function printUsage(hasInput: boolean): never {
   const bin = `${bold(cyan("npx"))} ${bold("mdzilla")}`;
   const banner = isAgent
@@ -24,25 +25,27 @@ export function printUsage(hasInput: boolean): never {
       `  ${bold("mdzilla")} ${dim("— Markdown browser for humans and agents")}`,
       "",
       `${bold("Usage:")}`,
-      `  ${bin} ${cyan("<dir>")}                 ${dim("Browse local docs directory")}`,
-      `  ${bin} ${cyan("<file.md>")}             ${dim("Render a single markdown file")}`,
-      `  ${bin} ${cyan("gh:owner/repo")}         ${dim("Browse GitHub repo docs")}`,
-      `  ${bin} ${cyan("npm:package-name")}      ${dim("Browse npm package docs")}`,
-      `  ${bin} ${cyan("https://example.com")}   ${dim("Browse remote docs via HTTP")}`,
+      `  ${bin} ${cyan("<source>")}                           ${dim("Open docs in browser")}`,
+      `  ${bin} ${cyan("<source>")} ${cyan("<path>")}                    ${dim("Render a specific page")}`,
+      `  ${bin} ${cyan("<source>")} ${cyan("<query>")}                   ${dim("Search docs")}`,
+      `  ${bin} ${cyan("<file.md>")}                          ${dim("Render a single markdown file")}`,
+      "",
+      `${bold("Sources:")}`,
+      `  ${cyan("./docs")}                Local directory`,
+      `  ${cyan("gh:owner/repo")}         GitHub repo (looks for docs/ directory)`,
+      `  ${cyan("npm:package-name")}      npm package docs`,
+      `  ${cyan("https://example.com")}   Remote docs via HTTP / llms.txt`,
       "",
       `${bold("Options:")}`,
       `  ${cyan("--export")} ${dim("<dir>")}   Export docs to flat .md files`,
-      `  ${cyan("--search")} ${dim("<query>")} Search pages by title or path`,
-      `  ${cyan("--page")} ${dim("<path>")}    Print a single page and exit`,
-      `  ${cyan("--plain")}          Plain text output (no TUI)`,
-      `  ${cyan("--headless")}       Alias for --plain`,
+      `  ${cyan("--plain")}          Plain text output (auto-enabled for agents / non-TTY)`,
       `  ${cyan("-h, --help")}       Show this help message`,
       "",
-      `${bold("Remarks:")}`,
-      `  ${dim("Headless mode is auto-enabled when called by AI agents or when stdout is not a TTY.")}`,
-      `  ${dim("GitHub source (gh:) looks for a docs/ directory in the repository.")}`,
-      `  ${dim("HTTP source tries /llms.txt first, then fetches with Accept: text/markdown,")}`,
-      `  ${dim("and falls back to HTML-to-markdown conversion.")}`,
+      `${bold("Examples:")}`,
+      `  ${bin} ${cyan("gh:unjs/h3")}                         ${dim("Open H3 docs in browser")}`,
+      `  ${bin} ${cyan("gh:unjs/h3 /guide/basics")}           ${dim("Render a specific page")}`,
+      `  ${bin} ${cyan("gh:unjs/h3 router")}                  ${dim("Search for 'router'")}`,
+      `  ${bin} ${cyan("gh:unjs/h3 --export ./h3-docs")}      ${dim("Export to flat files")}`,
     ].join("\n"),
   );
   process.exit(hasInput ? 0 : 1);

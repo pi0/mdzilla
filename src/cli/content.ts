@@ -6,10 +6,9 @@ import { dim, wrapAnsi } from "./_ansi.ts";
 export async function renderContent(
   content: string,
   entry: NavEntry,
-  navWidth: number,
 ): Promise<string[]> {
   const cols = process.stdout.columns || 80;
-  const contentWidth = cols - navWidth - 2; // 1 separator + 1 padding
+
   // Extract code blocks and languages from markdown source
   const codeBlocks: { lang: string; code: string }[] = [];
   const codeRe = /```(\w+)[^\n]*\n([\s\S]*?)```/g;
@@ -65,14 +64,14 @@ export async function renderContent(
             hlLines.pop();
           }
           for (const hlLine of hlLines) {
-            for (const w of wrapAnsi("  " + hlLine, contentWidth)) {
+            for (const w of wrapAnsi("  " + hlLine, cols)) {
               lines.push(w + "\x1B[0m");
             }
           }
         } else {
           // No highlight — output original dim lines
           for (const dl of dimLines) {
-            for (const w of wrapAnsi(dl, contentWidth)) {
+            for (const w of wrapAnsi(dl, cols)) {
               lines.push(w + "\x1B[0m");
             }
           }
@@ -85,7 +84,7 @@ export async function renderContent(
       continue;
     }
 
-    for (const w of wrapAnsi(rawLine, contentWidth)) {
+    for (const w of wrapAnsi(rawLine, cols)) {
       lines.push(w + "\x1B[0m");
     }
   }

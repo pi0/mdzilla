@@ -23,10 +23,10 @@ Works best with [Docus](https://docus.dev)/[Undocs](https://undocs.pages.dev/) d
 ## Quick Start
 
 ```sh
-npx mdzilla <dir>                        # Browse local docs directory
+npx mdzilla <source>                     # Open docs in browser
+npx mdzilla <source> <path>              # Render a specific page
+npx mdzilla <source> <query>             # Search docs
 npx mdzilla <file.md>                    # Render a single markdown file
-npx mdzilla gh:owner/repo                # Browse GitHub repo docs
-npx mdzilla npm:package-name             # Browse npm package docs
 npx mdzilla <source> --export <outdir>   # Export docs to flat .md files
 ```
 
@@ -58,72 +58,24 @@ Flatten any docs source into plain `.md` files:
 npx mdzilla <source> --export <outdir>
 ```
 
-### Single Page
+### Smart Resolve
 
-Print a specific page by path and exit:
+The second positional argument is smart-resolved: if it matches a navigation path, the page is rendered; otherwise it's treated as a search query.
 
 ```sh
-npx mdzilla gh:nuxt/nuxt --page /getting-started/seo-meta
-npx mdzilla gh:nuxt/nuxt --plain --page /getting-started/seo-meta
+npx mdzilla gh:unjs/h3 /guide/basics    # Render a specific page
+npx mdzilla gh:unjs/h3 router           # Search for 'router'
 ```
 
-### Headless Mode
+### Plain Mode
 
-Use `--plain` (or `--headless`) for non-interactive output — works like `cat` but for rendered markdown. Auto-enabled when piping output or when called by AI agents.
+Use `--plain` for plain text output. Auto-enabled when piping output or when called by AI agents.
 
 ```sh
 npx mdzilla README.md --plain          # Pretty-print a markdown file
 npx mdzilla README.md | head           # Auto-plain when piped (no TTY)
 npx mdzilla gh:unjs/h3 --plain         # List all pages in plain text
 ```
-
-### Keyboard Controls
-
-<details>
-<summary><strong>Browse mode</strong></summary>
-
-| Key                   | Action               |
-| :-------------------- | :------------------- |
-| `↑` `↓` / `j` `k`     | Navigate entries     |
-| `Enter` / `Tab` / `→` | Focus content        |
-| `Space` / `PgDn`      | Page down            |
-| `b` / `PgUp`          | Page up              |
-| `g` / `G`             | Jump to first / last |
-| `/`                   | Search               |
-| `t`                   | Toggle sidebar       |
-| `q`                   | Quit                 |
-
-</details>
-
-<details>
-<summary><strong>Content mode</strong></summary>
-
-| Key                 | Action                |
-| :------------------ | :-------------------- |
-| `↑` `↓` / `j` `k`   | Scroll                |
-| `Space` / `PgDn`    | Page down             |
-| `b` / `PgUp`        | Page up               |
-| `g` / `G`           | Jump to top / bottom  |
-| `/`                 | Search in page        |
-| `n` / `N`           | Next / previous match |
-| `Tab` / `Shift+Tab` | Cycle links           |
-| `Enter`             | Open link             |
-| `Backspace` / `Esc` | Back to nav           |
-| `q`                 | Quit                  |
-
-</details>
-
-<details>
-<summary><strong>Search mode</strong></summary>
-
-| Key     | Action           |
-| :------ | :--------------- |
-| _Type_  | Filter results   |
-| `↑` `↓` | Navigate results |
-| `Enter` | Confirm          |
-| `Esc`   | Cancel           |
-
-</details>
 
 ## Programmatic API
 

@@ -2,9 +2,11 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { isAgent } from "std-env";
 import { parseMeta, renderToText } from "md4x";
-import type { Collection } from "../collection.ts";
+import type { Source } from "../sources/_base.ts";
+import type { Collection, FlatEntry } from "../collection.ts";
 import { renderContent } from "./content.ts";
 import { bold, cyan, dim, highlight } from "./_ansi.ts";
+import { openInBrowser } from "./_utils.ts";
 
 export async function singleFileMode(filePath: string, plain?: boolean, isURL?: boolean) {
   const raw = isURL
@@ -20,23 +22,28 @@ export async function singleFileMode(filePath: string, plain?: boolean, isURL?: 
   const slug = isURL
     ? new URL(filePath).pathname.split("/").pop()?.replace(/\.md$/i, "") || "page"
     : basename(filePath, ".md");
-  const lines = await renderContent(
-    raw,
-    { slug, path: "/" + slug, title: meta.title || slug, order: 0 },
-    0,
-  );
+  const lines = await renderContent(raw, {
+    slug,
+    path: "/" + slug,
+    title: meta.title || slug,
+    order: 0,
+  });
   process.stdout.write(lines.join("\n") + "\n");
 }
 
-export async function pageMode(docs: Collection, pagePath: string, plain?: boolean) {
-  const normalized = pagePath.startsWith("/") ? pagePath : "/" + pagePath;
-  const { entry, raw } = await docs.resolvePage(normalized);
-
+export async function renderPage(
+  docs: Collection,
+  resolved: { entry?: FlatEntry; raw?: string },
+  pagePath: string,
+  plain?: boolean,
+) {
+  const { entry, raw } = resolved;
   if (!raw) {
-    printNotFound(docs, pagePath, normalized);
+    printNotFound(docs, pagePath);
     process.exit(1);
   }
 
+  const normalized = pagePath.startsWith("/") ? pagePath : "/" + pagePath;
   const slug = (entry?.entry.path || normalized).split("/").pop() || "";
   const navEntry = entry?.entry || {
     slug,
@@ -51,60 +58,12 @@ export async function pageMode(docs: Collection, pagePath: string, plain?: boole
       process.stdout.write(agentTrailer(docs, normalized));
     }
   } else {
-    const lines = await renderContent(raw, navEntry, 0);
+    const lines = await renderContent(raw, navEntry);
     process.stdout.write(lines.join("\n") + "\n");
   }
 }
 
-export async function plainMode(docs: Collection, pagePath?: string) {
-  const navigable = docs.pages;
-  if (navigable.length === 0) {
-    console.log("No pages found.");
-    return;
-  }
-
-  // Agent requesting a specific page: content + trailer (skip TOC)
-  if (isAgent && pagePath) {
-    const normalized = pagePath.startsWith("/") ? pagePath : "/" + pagePath;
-    const resolved = await docs.resolvePage(normalized);
-    if (resolved.raw) {
-      process.stdout.write(renderToText(resolved.raw) + "\n");
-      process.stdout.write(agentTrailer(docs, normalized));
-    } else {
-      printNotFound(docs, pagePath, normalized);
-    }
-    return;
-  }
-
-  // Render TOC
-  const tocLines: string[] = ["Table of Contents", ""];
-  for (const f of navigable) {
-    const indent = "  ".repeat(f.depth);
-    tocLines.push(`${indent}- [${f.entry.title}](${f.entry.path})`);
-  }
-  process.stdout.write(tocLines.join("\n") + "\n");
-
-  // Render target page content (specific page or first page)
-  if (pagePath) {
-    const resolved = await docs.resolvePage(pagePath);
-    if (resolved.raw) {
-      process.stdout.write(renderToText(resolved.raw) + "\n\n");
-    }
-  } else {
-    const raw = await docs.getContent(navigable[0]!);
-    if (raw) {
-      process.stdout.write(renderToText(raw) + "\n\n");
-    }
-  }
-
-  if (isAgent && navigable.length > 1) {
-    process.stdout.write(
-      "\n---\n\nTo read a specific page from the table of contents above, run this command again with `--page <path>`.\nTo search within pages, use `--search <query>`.\n",
-    );
-  }
-}
-
-export async function searchMode(docs: Collection, query: string) {
+export async function searchMode(docs: Collection, query: string, plain?: boolean) {
   let count = 0;
   const matchedPaths: string[] = [];
   for await (const { flat: f, titleMatch, contentMatches } of docs.search(query)) {
@@ -114,14 +73,14 @@ export async function searchMode(docs: Collection, query: string) {
     count++;
     matchedPaths.push(f.entry.path);
 
-    if (isAgent) {
-      // Agent-friendly: clear page identity, description, and context
+    if (plain) {
       const desc = f.entry.description ? ` — ${f.entry.description}` : "";
-      const badge = titleMatch && contentMatches.length > 0
-        ? " (title + content)"
-        : titleMatch
-          ? " (title)"
-          : ` (${contentMatches.length} content match${contentMatches.length > 1 ? "es" : ""})`;
+      const badge =
+        titleMatch && contentMatches.length > 0
+          ? " (title + content)"
+          : titleMatch
+            ? " (title)"
+            : ` (${contentMatches.length} content match${contentMatches.length > 1 ? "es" : ""})`;
       process.stdout.write(`- **${f.entry.title}** \`${f.entry.path}\`${desc}${badge}\n`);
       for (const m of contentMatches.slice(0, 3)) {
         process.stdout.write(`  > ${m.text}\n`);
@@ -144,6 +103,24 @@ export async function searchMode(docs: Collection, query: string) {
   }
   if (count === 0) {
     console.log(`No results for "${query}".`);
+    const suggestions = findSuggestions(docs, query);
+    if (suggestions.length > 0) {
+      console.log("");
+      console.log(plain ? "Related pages:" : bold("Related pages:"));
+      for (const s of suggestions) {
+        if (plain) {
+          console.log(`  - [${s.entry.title}](${s.entry.path})`);
+        } else {
+          console.log(`  ${bold(cyan(s.entry.title))} ${dim(s.entry.path)}`);
+        }
+      }
+      if (isAgent) {
+        console.log("");
+        console.log(
+          "To read a specific page, run this command again with the page path as second argument.",
+        );
+      }
+    }
   } else if (isAgent) {
     process.stdout.write(
       [
@@ -151,12 +128,51 @@ export async function searchMode(docs: Collection, query: string) {
         "---",
         "",
         `Found ${count} page${count > 1 ? "s" : ""} matching "${query}".`,
-        "To read a specific page, run this command again with `--page <path>`, for example:",
-        ...[...new Set(matchedPaths)].slice(0, 3).map((p) => `  --page ${p}`),
+        "To read a specific page, run this command again with the page path as second argument, for example:",
+        ...[...new Set(matchedPaths)].slice(0, 3).map((p) => `  mdzilla <source> ${p}`),
         "",
       ].join("\n"),
     );
   }
+}
+
+export async function tocMode(docs: Collection) {
+  const navigable = docs.pages;
+  if (navigable.length === 0) {
+    console.log("No pages found.");
+    return;
+  }
+
+  const tocLines: string[] = ["Table of Contents", ""];
+  for (const f of navigable) {
+    const indent = "  ".repeat(f.depth);
+    tocLines.push(`${indent}- [${f.entry.title}](${f.entry.path})`);
+  }
+  process.stdout.write(tocLines.join("\n") + "\n");
+
+  // Render first page content
+  const raw = await docs.getContent(navigable[0]!);
+  if (raw) {
+    process.stdout.write("\n" + renderToText(raw) + "\n");
+  }
+
+  if (isAgent && navigable.length > 1) {
+    process.stdout.write(
+      "\n---\n\nTo read a specific page, run this command again with the page path as second argument.\nTo search within pages, pass a search query as second argument.\n",
+    );
+  }
+}
+
+export async function serverMode(source: Source, _docs: Collection) {
+  const { serve } = await import("srvx");
+  const { createDocsServer } = (await import(
+    "../../web/.output/server/index.mjs"
+  )) as unknown as typeof import("../../web/server/entry.ts");
+  const docsServer = await createDocsServer({ source });
+  const server = serve({ fetch: docsServer.fetch, gracefulShutdown: false });
+  await server.ready();
+  await server.fetch(new Request(new URL("/api/meta", server.url))); // prefetch
+  openInBrowser(server.url!);
 }
 
 function agentTrailer(docs: Collection, currentPath?: string): string {
@@ -177,45 +193,50 @@ function agentTrailer(docs: Collection, currentPath?: string): string {
     "Other available pages:",
     ...otherPages.map((p) => `  - [${p.entry.title}](${p.entry.path})`),
     "",
-    "To read a specific page, run this command again with `--page <path>`.",
-    "To search within pages, run this command again with `--search <query>`.",
-    "To view the full table of contents, run this command without `--page`.",
+    "To read a specific page, run this command again with the page path as second argument.",
+    "To search within pages, pass a search query as second argument.",
     "",
   ];
   return "\n" + lines.join("\n");
 }
 
-function printNotFound(docs: Collection, pagePath: string, normalized: string) {
+function printNotFound(docs: Collection, pagePath: string) {
   process.stderr.write(`Page not found: ${pagePath}\n`);
-  // Suggest similar pages from path segments
-  const segments = normalized.split("/").filter(Boolean);
+  const suggestions = findSuggestions(docs, pagePath);
+  if (suggestions.length > 0) {
+    process.stderr.write("\nDid you mean:\n");
+    for (const s of suggestions) {
+      process.stderr.write(`  - ${s.entry.title} (${s.entry.path})\n`);
+    }
+  }
+  process.stderr.write(
+    "\nTo search within pages, pass a search query as second argument.\n",
+  );
+}
+
+/** Try fuzzy match, then keyword match on path segments. */
+function findSuggestions(docs: Collection, query: string) {
+  // Try fuzzy match on the full query
+  let results = docs.filter(query);
+  if (results.length > 0) return results.slice(0, 5);
+
+  // Try the last path segment
+  const segments = query.replace(/^\/+/, "").split("/").filter(Boolean);
+  const lastSegment = segments.at(-1);
+  if (lastSegment && lastSegment !== query) {
+    results = docs.filter(lastSegment);
+    if (results.length > 0) return results.slice(0, 5);
+  }
+
+  // Try individual keywords from path segments
   const keywords = segments.flatMap((s) => s.split("-")).filter(Boolean);
-  let suggestions = docs.filter(segments.at(-1) || normalized);
-  if (suggestions.length === 0) {
-    suggestions = docs.pages.filter((f) =>
+  return docs.pages
+    .filter((f) =>
       keywords.some(
         (kw) =>
           f.entry.title.toLowerCase().includes(kw) ||
           f.entry.path.toLowerCase().includes(kw),
       ),
-    );
-  }
-  if (suggestions.length > 0) {
-    const shown = suggestions.slice(0, 5);
-    process.stderr.write("\nDid you mean:\n");
-    for (const s of shown) {
-      process.stderr.write(`  - ${s.entry.title} (${s.entry.path})\n`);
-    }
-    if (suggestions.length > 5) {
-      process.stderr.write(`  ... ${suggestions.length - 5} more\n`);
-    }
-  }
-  process.stderr.write(
-    [
-      "",
-      "To search within pages, use `--search <query>`.",
-      "To view the full table of contents, run this command without `--page`.",
-      "",
-    ].join("\n"),
-  );
+    )
+    .slice(0, 5);
 }
