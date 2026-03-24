@@ -3,10 +3,7 @@ import { highlightText } from "@speed-highlight/core/terminal";
 import type { NavEntry } from "../nav.ts";
 import { dim, wrapAnsi } from "./_ansi.ts";
 
-export async function renderContent(
-  content: string,
-  entry: NavEntry,
-): Promise<string[]> {
+export async function renderContent(content: string, entry: NavEntry): Promise<string[]> {
   const cols = process.stdout.columns || 80;
 
   // Extract code blocks and languages from markdown source

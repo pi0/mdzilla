@@ -178,8 +178,7 @@ export class Collection {
       .filter((f) =>
         keywords.some(
           (kw) =>
-            f.entry.title.toLowerCase().includes(kw) ||
-            f.entry.path.toLowerCase().includes(kw),
+            f.entry.title.toLowerCase().includes(kw) || f.entry.path.toLowerCase().includes(kw),
         ),
       )
       .slice(0, max);
@@ -258,18 +257,17 @@ function fuzzyFilter<T>(items: T[], query: string, getText: (item: T) => string[
   return scored.map((s) => s.item);
 }
 
-
-function findMatchLines(
-  content: string,
-  lowerQuery: string,
-  contextLines = 1,
-): ContentMatch[] {
+function findMatchLines(content: string, lowerQuery: string, contextLines = 1): ContentMatch[] {
   const matches: ContentMatch[] = [];
   const lines = content.split("\n");
   for (let i = 0; i < lines.length; i++) {
     if (lines[i]!.toLowerCase().includes(lowerQuery)) {
       const context: string[] = [];
-      for (let j = Math.max(0, i - contextLines); j <= Math.min(lines.length - 1, i + contextLines); j++) {
+      for (
+        let j = Math.max(0, i - contextLines);
+        j <= Math.min(lines.length - 1, i + contextLines);
+        j++
+      ) {
         if (j !== i) context.push(lines[j]!.trim());
       }
       matches.push({ line: i + 1, text: lines[i]!.trim(), context });

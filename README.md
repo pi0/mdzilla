@@ -107,9 +107,9 @@ import { Collection, resolveSource } from "mdzilla";
 const docs = new Collection(resolveSource("./docs"));
 await docs.load();
 
-docs.tree;              // NavEntry[] — nested navigation tree
-docs.flat;              // FlatEntry[] — flattened list with depth info
-docs.pages;             // FlatEntry[] — only navigable pages (no directory stubs)
+docs.tree; // NavEntry[] — nested navigation tree
+docs.flat; // FlatEntry[] — flattened list with depth info
+docs.pages; // FlatEntry[] — only navigable pages (no directory stubs)
 
 // Read page content
 const page = docs.findByPath("/guide/installation");

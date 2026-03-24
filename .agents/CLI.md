@@ -70,6 +70,7 @@ The second positional argument goes through:
 ### Agent Integration
 
 When `isAgent` is detected (or `--plain`):
+
 - Output is raw markdown (via `renderToText`)
 - Trailers appended with other available pages and usage hints
 - Search results include structured badges (title/content match counts)
