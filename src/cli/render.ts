@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
+import { isAgent } from "std-env";
 import { parseMeta, renderToText } from "md4x";
 import type { DocsManager } from "../docs/manager.ts";
 import { renderContent } from "./content.ts";
@@ -45,6 +46,9 @@ export async function pageMode(docs: DocsManager, pagePath: string, plain?: bool
 
   if (plain) {
     process.stdout.write(renderToText(raw) + "\n");
+    if (isAgent) {
+      process.stdout.write(agentTrailer(docs, normalized));
+    }
   } else {
     const lines = await renderContent(raw, navEntry, 0);
     process.stdout.write(lines.join("\n") + "\n");
@@ -58,6 +62,19 @@ export async function plainMode(docs: DocsManager, pagePath?: string) {
     return;
   }
 
+  // Agent requesting a specific page: content + trailer (skip TOC)
+  if (isAgent && pagePath) {
+    const normalized = pagePath.startsWith("/") ? pagePath : "/" + pagePath;
+    const resolved = await docs.resolvePage(normalized);
+    if (resolved.raw) {
+      process.stdout.write(renderToText(resolved.raw) + "\n");
+    } else {
+      process.stdout.write(`Page not found: ${pagePath}\n`);
+    }
+    process.stdout.write(agentTrailer(docs, normalized));
+    return;
+  }
+
   // Render TOC
   const tocLines: string[] = ["Table of Contents", ""];
   for (const f of navigable) {
@@ -67,16 +84,40 @@ export async function plainMode(docs: DocsManager, pagePath?: string) {
   process.stdout.write(tocLines.join("\n") + "\n");
 
   // Render target page content (specific page or first page)
-  let targetEntry = navigable[0]!;
   if (pagePath) {
     const resolved = await docs.resolvePage(pagePath);
     if (resolved.raw) {
       process.stdout.write(renderToText(resolved.raw) + "\n\n");
     }
   } else {
-    const raw = await docs.getContent(targetEntry);
+    const raw = await docs.getContent(navigable[0]!);
     if (raw) {
       process.stdout.write(renderToText(raw) + "\n\n");
     }
   }
+
+  if (isAgent && navigable.length > 1) {
+    process.stdout.write("\n---\n\nTo read a specific page from the table of contents above, run this command again with `--page <path>`.\n");
+  }
+}
+
+function agentTrailer(docs: DocsManager, currentPath?: string): string {
+  const pages = docs.pages;
+  if (pages.length <= 1) return "";
+
+  const normalized = currentPath?.startsWith("/") ? currentPath : currentPath ? "/" + currentPath : undefined;
+  const otherPages = pages.filter((p) => p.entry.path !== normalized);
+  if (otherPages.length === 0) return "";
+
+  const lines = [
+    "---",
+    "",
+    "Other available pages:",
+    ...otherPages.map((p) => `  - [${p.entry.title}](${p.entry.path})`),
+    "",
+    "To read a specific page, run this command again with `--page <path>`.",
+    "To view the full table of contents, run this command without `--page`.",
+    "",
+  ];
+  return "\n" + lines.join("\n");
 }
