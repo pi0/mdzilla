@@ -1,4 +1,4 @@
-import type { FlatEntry } from "../../docs/manager.ts";
+import type { FlatEntry } from "../../collection.ts";
 import { bold, dim, bgGray, padTo, highlight } from "../_ansi.ts";
 
 export function calcNavWidth(flat: FlatEntry[]): number {

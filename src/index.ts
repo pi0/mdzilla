@@ -1,21 +1,11 @@
-export { DocsManager } from "./docs/manager.ts";
+export { Collection } from "./collection.ts";
 
-export type { FlatEntry, NavEntry } from "./docs/manager.ts";
+export type { FlatEntry, NavEntry } from "./collection.ts";
 
-export {
-  DocsSource,
-  DocsSourceFS,
-  DocsSourceGit,
-  DocsSourceHTTP,
-  DocsSourceNpm,
-} from "./docs/source.ts";
+export { Source, SourceFS, SourceGit, SourceHTTP, SourceNpm } from "./source.ts";
 
-export type {
-  DocsSourceGitOptions,
-  DocsSourceHTTPOptions,
-  DocsSourceNpmOptions,
-} from "./docs/source.ts";
+export type { SourceGitOptions, SourceHTTPOptions, SourceNpmOptions } from "./source.ts";
 
-export { exportDocsToFS } from "./docs/exporter.ts";
+export { exportDocsToFS } from "./exporter.ts";
 
-export type { ExportOptions } from "./docs/exporter.ts";
+export type { ExportOptions } from "./exporter.ts";

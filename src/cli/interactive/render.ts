@@ -1,4 +1,4 @@
-import type { FlatEntry } from "../../docs/manager.ts";
+import type { FlatEntry } from "../../collection.ts";
 import { dim, cyan, padTo, truncateTo, highlightAnsi } from "../_ansi.ts";
 
 import { calcNavWidth, renderNavPanel } from "./nav.ts";

@@ -1,6 +1,6 @@
 import type { NavEntry } from "../nav.ts";
 
-export abstract class DocsSource {
+export abstract class Source {
   abstract load(): Promise<{
     tree: NavEntry[];
     fileMap: Map<string, string>;

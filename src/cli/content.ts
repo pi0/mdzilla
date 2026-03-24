@@ -1,6 +1,6 @@
 import { renderToAnsi } from "md4x";
 import { highlightText } from "@speed-highlight/core/terminal";
-import type { NavEntry } from "../docs/nav.ts";
+import type { NavEntry } from "../nav.ts";
 import { dim, wrapAnsi } from "./_ansi.ts";
 
 export async function renderContent(

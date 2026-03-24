@@ -6,25 +6,23 @@ Documentation tooling built on [md4x](https://github.com/unjs/md4x).
 
 ```
 src/
-  index.ts          — library entry (exports DocsManager, sources, exporters)
+  index.ts          — library entry (exports Collection, sources, exporters)
+  collection.ts     — Collection class (tree, flat entries, content cache, fuzzy search)
+                      includes flattenTree(), fuzzyMatch(), fuzzyFilter() as internal helpers
+  nav.ts            — Nav scanner using md4x parseMeta
+  source.ts         — re-exports all sources for backwards compat
+  exporter.ts       — exportDocsToFS function
+  sources/
+    _base.ts        — Source abstract base class
+    fs.ts           — SourceFS (local filesystem), includes buildFileMap()
+    git.ts          — SourceGit (GitHub via giget)
+    npm.ts          — SourceNpm (npm packages via giget)
+    http.ts         — SourceHTTP (remote HTTP/HTML→markdown, llms.txt support)
   cli/
-    main.ts         — CLI app: state management, input handling, main loop (~510 LoC)
-    ansi.ts         — ANSI escape helpers (bold, dim, cyan, wrap, highlight, etc.)
-    nav.ts          — sidebar/nav panel rendering (tree connectors, scroll, highlights)
+    main.ts         — CLI app: state management, input handling, main loop
     content.ts      — content rendering (markdown → ANSI, code syntax highlighting)
     render.ts       — compositor (renderSplit combines sidebar + content + footer)
-  docs/
-    manager.ts      — DocsManager class (tree, flat entries, content cache, fuzzy search)
-                      includes flattenTree(), fuzzyMatch(), fuzzyFilter() as internal helpers
-    nav.ts          — Nav scanner using md4x parseMeta
-    source.ts       — re-exports all sources for backwards compat
-    sources/
-      _base.ts      — DocsSource abstract base class
-      fs.ts         — DocsSourceFS (local filesystem), includes buildFileMap()
-      git.ts        — DocsSourceGit (GitHub via giget)
-      npm.ts        — DocsSourceNpm (npm packages via giget)
-      http.ts       — DocsSourceHTTP (remote HTTP/HTML→markdown, llms.txt support)
-    exporter.ts     — DocsExporter (abstract), DocsExporterFS
+    interactive/    — TUI interactive mode
 test/
   nav.test.ts       — snapshot tests for Nav scanner
   fixture/          — simple test fixture (index, getting-started, api, drafts, partials)
@@ -85,25 +83,24 @@ interface ScanNavOptions {
 
 ### Core
 
-- `DocsManager` — main class: `load()`, `reload()`, `getContent()`, `invalidate()`, `filter()`, `matchIndices()`
+- `Collection` — main class: `load()`, `reload()`, `getContent()`, `invalidate()`, `filter()`, `matchIndices()`
 - `FlatEntry` — `{ entry: NavEntry, depth: number, filePath?: string }`
 - `NavEntry` — navigation tree node type
 
 ### Sources
 
-- `DocsSource` — abstract base class (`load()`, `readContent()`)
-- `DocsSourceFS` — load from local filesystem directory
-- `DocsSourceGit` — download from GitHub via giget, then read locally
-  - `DocsSourceGitOptions` — `{ auth?: string, subdir?: string }`
-- `DocsSourceNpm` — download npm package via giget, then read locally
-  - `DocsSourceNpmOptions` — `{ subdir?: string }`
-- `DocsSourceHTTP` — fetch pages over HTTP with `Accept: text/markdown`
-  - `DocsSourceHTTPOptions` — `{ headers?: Record<string, string> }`
+- `Source` — abstract base class (`load()`, `readContent()`)
+- `SourceFS` — load from local filesystem directory
+- `SourceGit` — download from GitHub via giget, then read locally
+  - `SourceGitOptions` — `{ auth?: string, subdir?: string }`
+- `SourceNpm` — download npm package via giget, then read locally
+  - `SourceNpmOptions` — `{ subdir?: string }`
+- `SourceHTTP` — fetch pages over HTTP with `Accept: text/markdown`
+  - `SourceHTTPOptions` — `{ headers?: Record<string, string> }`
 
 ### Exporters
 
-- `DocsExporter` — abstract base class
-- `DocsExporterFS` — export flat entries to `<outdir>/<path>.md`
+- `exportDocsToFS` — export flat entries to `<outdir>/<path>.md`
   - `ExportOptions` — `{ filter?: (entry: FlatEntry) => boolean }`
 
 ### Internal Utilities (not exported)

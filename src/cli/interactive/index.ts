@@ -1,4 +1,4 @@
-import type { DocsManager, FlatEntry } from "../../docs/manager.ts";
+import type { Collection, FlatEntry } from "../../collection.ts";
 import { openInBrowser } from "../_utils.ts";
 import {
   clear,
@@ -13,7 +13,7 @@ import { renderSplit } from "./render.ts";
 import { renderContent } from "../content.ts";
 import { calcNavWidth } from "./nav.ts";
 
-export async function interactiveMode(docs: DocsManager) {
+export async function interactiveMode(docs: Collection) {
   const flat = docs.flat;
 
   if (flat.length === 0) {

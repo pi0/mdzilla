@@ -1,4 +1,4 @@
-import type { DocsSource } from "./source.ts";
+import type { Source } from "./sources/_base.ts";
 import type { NavEntry } from "./nav.ts";
 
 export type { NavEntry };
@@ -9,15 +9,15 @@ export interface FlatEntry {
   filePath?: string;
 }
 
-export class DocsManager {
-  source: DocsSource;
+export class Collection {
+  source: Source;
   tree: NavEntry[] = [];
   flat: FlatEntry[] = [];
 
   private _fileMap = new Map<string, string>();
   private _contentCache = new Map<string, string>();
 
-  constructor(source: DocsSource) {
+  constructor(source: Source) {
     this.source = source;
   }
 

@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { isAgent } from "std-env";
 import { parseMeta, renderToText } from "md4x";
-import type { DocsManager } from "../docs/manager.ts";
+import type { Collection } from "../collection.ts";
 import { renderContent } from "./content.ts";
 
 export async function singleFileMode(filePath: string, plain?: boolean, isURL?: boolean) {
@@ -27,7 +27,7 @@ export async function singleFileMode(filePath: string, plain?: boolean, isURL?: 
   process.stdout.write(lines.join("\n") + "\n");
 }
 
-export async function pageMode(docs: DocsManager, pagePath: string, plain?: boolean) {
+export async function pageMode(docs: Collection, pagePath: string, plain?: boolean) {
   const normalized = pagePath.startsWith("/") ? pagePath : "/" + pagePath;
   const { entry, raw } = await docs.resolvePage(normalized);
 
@@ -55,7 +55,7 @@ export async function pageMode(docs: DocsManager, pagePath: string, plain?: bool
   }
 }
 
-export async function plainMode(docs: DocsManager, pagePath?: string) {
+export async function plainMode(docs: Collection, pagePath?: string) {
   const navigable = docs.pages;
   if (navigable.length === 0) {
     console.log("No pages found.");
@@ -103,7 +103,7 @@ export async function plainMode(docs: DocsManager, pagePath?: string) {
   }
 }
 
-function agentTrailer(docs: DocsManager, currentPath?: string): string {
+function agentTrailer(docs: Collection, currentPath?: string): string {
   const pages = docs.pages;
   if (pages.length <= 1) return "";
 

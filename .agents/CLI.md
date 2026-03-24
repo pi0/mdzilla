@@ -19,9 +19,9 @@ pnpm mdzilla <dir> --export <out> # export docs to flat .md files
 - `src/cli/nav.ts` — nav panel renderer (tree connectors, scroll, search highlights)
 - `src/cli/content.ts` — content renderer (markdown → ANSI with syntax highlighting)
 - `src/cli/render.ts` — compositor (combines sidebar + content, renders footer)
-- `src/docs/manager.ts` — `DocsManager` class (tree loading, flat entries, file map, content cache, fuzzy search)
-- `src/docs/source.ts` — `DocsSourceFS` (local), `DocsSourceGit` (GitHub via giget), `DocsSourceHTTP` (remote HTTP with llms.txt)
-- `src/docs/exporter.ts` — `DocsExporterFS` (export docs to flat .md files)
+- `src/collection.ts` — `Collection` class (tree loading, flat entries, file map, content cache, fuzzy search)
+- `src/source.ts` — `SourceFS` (local), `SourceGit` (GitHub via giget), `SourceHTTP` (remote HTTP with llms.txt)
+- `src/exporter.ts` — `exportDocsToFS` (export docs to flat .md files)
 
 ## Architecture
 
@@ -30,7 +30,7 @@ Split-pane layout: nav tree on the left, content on the right. Content auto-load
 ### Data Flow
 
 ```
-DocsManager (src/docs/manager.ts)
+Collection (src/collection.ts)
   ├── .load()        → source.load() + flattenTree()
   ├── .flat          → FlatEntry[] for rendering
   ├── .getContent()  → cached file reads via source.readContent()
@@ -111,24 +111,24 @@ All styling uses raw escape sequences — no chalk/colorette dependency:
 - Supports toggling sidebar visibility
 - Re-exports `calcNavWidth` and `renderContent`
 
-### DocsManager (`src/docs/manager.ts`)
+### Collection (`src/collection.ts`)
 
 - `FlatEntry { entry: NavEntry, depth: number, filePath?: string }`
-- Delegates to `DocsSource.load()` then `flattenTree()`
+- Delegates to `Source.load()` then `flattenTree()`
 - Content cache: lazy reads via `source.readContent()` with `Map<filePath, content>`
-- Search delegates to `fuzzyFilter()` (inlined in `manager.ts`)
+- Search delegates to `fuzzyFilter()` (inlined in `collection.ts`)
 
-### Sources (`src/docs/sources/`)
+### Sources (`src/sources/`)
 
-- `DocsSourceFS` — load from local filesystem directory
-- `DocsSourceGit` — download from GitHub via giget, supports `auth` and `subdir` options
+- `SourceFS` — load from local filesystem directory
+- `SourceGit` — download from GitHub via giget, supports `auth` and `subdir` options
   - Downloads to `node_modules/.mdzilla/gh/<id>/`
-- `DocsSourceHTTP` — fetch pages over HTTP; tries `/llms.txt` first, falls back to homepage link extraction
+- `SourceHTTP` — fetch pages over HTTP; tries `/llms.txt` first, falls back to homepage link extraction
   - Sends `Accept: text/markdown` header
 
-### Exporter (`src/docs/exporter.ts`)
+### Exporter (`src/exporter.ts`)
 
-- `DocsExporterFS` — export flat entries as `<outdir>/<path>.md`
+- `exportDocsToFS` — export flat entries as `<outdir>/<path>.md`
 - `ExportOptions.filter` — custom callback `(entry: FlatEntry) => boolean` to filter entries (default: skip stubs)
 
 ### Link Navigation
@@ -144,7 +144,7 @@ Content mode supports interactive links:
 - **No dependencies**: raw stdin + ANSI escapes keep it zero-dep for terminal control
 - **Split pane, not modal**: nav + content always visible; no separate "page mode"
 - **Auto-loading content**: async file read on cursor change; skips if same file already loaded
-- **DocsManager abstraction**: tree scanning, file mapping, content caching, and fuzzy search in one class
+- **Collection abstraction**: tree scanning, file mapping, content caching, and fuzzy search in one class
 - **Two-pass code highlighting**: extract & highlight code blocks separately, then post-replace in rendered output
 - **Flat list for navigation**: tree is flattened with depth tracking for indent, simplifies cursor/scroll logic
 - **Search confirms then returns to full tree**: enter in search jumps cursor to the matched entry in the unfiltered list

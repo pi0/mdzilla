@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { renderToMarkdown, renderToText } from "md4x";
-import type { DocsManager, FlatEntry } from "./manager.ts";
+import type { Collection, FlatEntry } from "./collection.ts";
 import type { NavEntry } from "./nav.ts";
 
 export interface ExportOptions {
@@ -31,7 +31,7 @@ const IGNORED_PATHS = new Set(["/llms.txt", "/llms-full.txt"]);
  * A `README.md` table of contents is generated at the root of the output directory.
  */
 export async function exportDocsToFS(
-  manager: DocsManager,
+  manager: Collection,
   dir: string,
   options: ExportOptions = {},
 ): Promise<void> {

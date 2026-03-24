@@ -128,9 +128,9 @@ npx mdzilla gh:unjs/h3 --plain         # List all pages in plain text
 ## Programmatic API
 
 ```js
-import { DocsManager, DocsSourceFS } from "mdzilla";
+import { Collection, SourceFS } from "mdzilla";
 
-const docs = new DocsManager(new DocsSourceFS("./docs"));
+const docs = new Collection(new SourceFS("./docs"));
 await docs.load();
 
 // Browse the navigation tree

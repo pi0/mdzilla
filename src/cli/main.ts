@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
 import { isAgent } from "std-env";
-import { DocsManager } from "../docs/manager.ts";
-import { DocsSourceFS, DocsSourceGit, DocsSourceHTTP, DocsSourceNpm } from "../docs/source.ts";
-import { exportDocsToFS } from "../docs/exporter.ts";
+import { Collection } from "../collection.ts";
+import { SourceFS, SourceGit, SourceHTTP, SourceNpm } from "../source.ts";
+import { exportDocsToFS } from "../exporter.ts";
 import { showCursor, leaveAltScreen } from "./_ansi.ts";
 import { printUsage } from "./_usage.ts";
 import { singleFileMode, pageMode, plainMode } from "./render.ts";
@@ -45,13 +45,13 @@ async function main() {
   }
 
   const source = isURL
-    ? new DocsSourceHTTP(docsDir)
+    ? new SourceHTTP(docsDir)
     : docsDir.startsWith("gh:")
-      ? new DocsSourceGit(docsDir)
+      ? new SourceGit(docsDir)
       : docsDir.startsWith("npm:")
-        ? new DocsSourceNpm(docsDir)
-        : new DocsSourceFS(docsDir);
-  const docs = new DocsManager(source);
+        ? new SourceNpm(docsDir)
+        : new SourceFS(docsDir);
+  const docs = new Collection(source);
   await docs.load();
 
   if (exportDir) {

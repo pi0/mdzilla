@@ -2,10 +2,10 @@ import { readFile } from "node:fs/promises";
 import { scanNav } from "../nav.ts";
 import { readdir } from "node:fs/promises";
 import { join, extname } from "node:path";
-import { DocsSource } from "./_base.ts";
+import { Source } from "./_base.ts";
 import type { NavEntry } from "../nav.ts";
 
-export class DocsSourceFS extends DocsSource {
+export class SourceFS extends Source {
   dir: string;
 
   constructor(dir: string) {

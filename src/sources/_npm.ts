@@ -1,5 +1,5 @@
 /**
- * Shared npm registry utilities used by DocsSourceNpm and DocsSourceHTTP.
+ * Shared npm registry utilities used by SourceNpm and SourceHTTP.
  */
 
 /** Parsed npm package spec */

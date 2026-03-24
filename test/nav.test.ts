@@ -4,7 +4,7 @@ import { resolve, dirname } from "node:path";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { scanNav, parseNumberedName, humanizeSlug } from "../src/docs/nav.ts";
+import { scanNav, parseNumberedName, humanizeSlug } from "../src/nav.ts";
 
 const fixtureDir = resolve(dirname(fileURLToPath(import.meta.url)), "docs");
 const simpleFixtureDir = resolve(dirname(fileURLToPath(import.meta.url)), "fixture");

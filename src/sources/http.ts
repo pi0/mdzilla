@@ -1,23 +1,23 @@
 import { parseMeta } from "md4x";
-import { DocsSource } from "./_base.ts";
+import { Source } from "./_base.ts";
 import { parseNpmURL, fetchNpmInfo } from "./_npm.ts";
 import type { NavEntry } from "../nav.ts";
 
-export interface DocsSourceHTTPOptions {
+export interface SourceHTTPOptions {
   /** Additional headers to send with each request */
   headers?: Record<string, string>;
 }
 
-export class DocsSourceHTTP extends DocsSource {
+export class SourceHTTP extends Source {
   url: string;
-  options: DocsSourceHTTPOptions;
+  options: SourceHTTPOptions;
 
   private _contentCache = new Map<string, string>();
   private _tree: NavEntry[] = [];
   private _fileMap = new Map<string, string>();
   private _npmPackage?: string;
 
-  constructor(url: string, options: DocsSourceHTTPOptions = {}) {
+  constructor(url: string, options: SourceHTTPOptions = {}) {
     super();
     this.url = url.replace(/\/+$/, "");
     this._npmPackage = parseNpmURL(this.url);
