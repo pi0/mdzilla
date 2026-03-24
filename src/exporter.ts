@@ -24,45 +24,50 @@ const IGNORED_PATHS = new Set(["/llms.txt", "/llms-full.txt"]);
 /**
  * Export documentation entries to a local filesystem directory as flat `.md` files.
  *
- * Each entry is written to `<dir>/<path>.md` (or `<dir>/<path>/index.md` for directory
- * index pages). Navigation order is preserved via `order` frontmatter in pages and
- * `.navigation.yml` files in directories.
+ * Each entry is written to `<dir>/<prefix>.<slug>.md` (or `<dir>/<prefix>.<slug>/index.md`
+ * for directory index pages). Navigation order is preserved via numeric prefixes on
+ * directories and files (e.g., `1.guide/`, `2.getting-started.md`) so the nav scanner
+ * can infer order without additional metadata files.
  *
  * A `README.md` table of contents is generated at the root of the output directory.
  */
 export async function exportDocsToFS(
-  manager: Collection,
+  collection: Collection,
   dir: string,
   options: ExportOptions = {},
 ): Promise<void> {
-  const rootEntry = manager.flat.find((f) => f.entry.path === "/");
+  const rootEntry = collection.flat.find((f) => f.entry.path === "/");
   const tocTitle = options.title ?? rootEntry?.entry.title ?? "Table of Contents";
   const tocLines: string[] = [`# ${tocTitle}`, ""];
   const writtenFiles = new Set<string>();
 
+  // Build a map from nav path → numbered filesystem path
+  const pathMap = new Map<string, string>();
+  buildNumberedPaths(collection.tree, "", pathMap);
+
   // Collect directory paths (entries with children) to fix file placement
   const dirPaths = new Set<string>();
-  collectDirPaths(manager.tree, dirPaths);
+  collectDirPaths(collection.tree, dirPaths);
 
-  for (const flat of manager.flat) {
+  for (const flat of collection.flat) {
     if (options.filter ? !options.filter(flat) : flat.entry.page === false) continue;
 
     if (IGNORED_PATHS.has(flat.entry.path)) continue;
 
-    let content = await manager.getContent(flat);
+    let content = await collection.getContent(flat);
     if (content === undefined) continue;
 
     const cleanContent = options.plainText ? renderToText(content) : renderToMarkdown(content);
 
-    // Directory index pages go to <dir>/index.md to avoid conflicting with the directory
+    const numberedPath = pathMap.get(flat.entry.path) ?? flat.entry.path;
     const isIndex = flat.entry.path === "/" || dirPaths.has(flat.entry.path);
     const filePath = isIndex
       ? flat.entry.path === "/"
         ? "/index.md"
-        : `${flat.entry.path}/index.md`
-      : flat.entry.path.endsWith(".md")
-        ? flat.entry.path
-        : `${flat.entry.path}.md`;
+        : `${numberedPath}/index.md`
+      : numberedPath.endsWith(".md")
+        ? numberedPath
+        : `${numberedPath}.md`;
     const dest = join(dir, filePath);
 
     await mkdir(dirname(dest), { recursive: true });
@@ -80,13 +85,6 @@ export async function exportDocsToFS(
     tocFile = `_${tocFile}`;
   }
   await writeFile(join(dir, tocFile), tocLines.join("\n") + "\n", "utf8");
-
-  // Write navigation manifest preserving full tree structure
-  await writeFile(
-    join(dir, "_navigation.json"),
-    JSON.stringify(manager.tree, null, 2) + "\n",
-    "utf8",
-  );
 }
 
 /** Collect all paths that are directories (have children in the tree). */
@@ -95,6 +93,25 @@ function collectDirPaths(entries: NavEntry[], set: Set<string>): void {
     if (entry.children?.length) {
       set.add(entry.path);
       collectDirPaths(entry.children, set);
+    }
+  }
+}
+
+/**
+ * Build a map from nav path → numbered filesystem path.
+ * Uses sibling index as the numeric prefix (e.g., `/guide` → `/1.guide`).
+ */
+function buildNumberedPaths(
+  entries: NavEntry[],
+  parentPath: string,
+  map: Map<string, string>,
+): void {
+  for (const [i, entry] of entries.entries()) {
+    const slug = entry.slug || "index";
+    const numbered = `${parentPath}/${i}.${slug}`;
+    map.set(entry.path, numbered);
+    if (entry.children?.length) {
+      buildNumberedPaths(entry.children, numbered, map);
     }
   }
 }

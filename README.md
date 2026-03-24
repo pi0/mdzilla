@@ -27,7 +27,6 @@ npx mdzilla <dir>                 # Browse local docs directory
 npx mdzilla <file.md>             # Render a single markdown file
 npx mdzilla gh:owner/repo         # Browse GitHub repo docs
 npx mdzilla npm:package-name      # Browse npm package docs
-npx mdzilla https://example.com   # Browse remote docs via HTTP
 ```
 
 ## Agent Skill
