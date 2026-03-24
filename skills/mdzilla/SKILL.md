@@ -57,34 +57,28 @@ Then read the exported `.md` files as needed.
 
 ## Programmatic API
 
+### Export Docs
+
 ```js
-import { Collection, FSSource, GitSource, HTTPSource, NpmSource } from "mdzilla";
+import { exportSource } from "mdzilla";
 
-// Local filesystem
-const docs = new Collection(new FSSource("./docs"));
+await exportSource("./docs", "./dist/docs");
+await exportSource("gh:unjs/h3", "./dist/h3-docs");
+await exportSource("npm:h3", "./dist/h3-docs", { plainText: true });
+await exportSource("https://h3.unjs.io", "./dist/h3-docs");
+```
 
-// GitHub repo
-const docs = new Collection(new GitSource("unjs/h3"));
+### Collection
 
-// npm package
-const docs = new Collection(new NpmSource("h3"));
+```js
+import { Collection, resolveSource } from "mdzilla";
 
-// HTTP (llms.txt → markdown negotiation → HTML→md fallback)
-const docs = new Collection(new HTTPSource("https://h3.unjs.io"));
-
+const docs = new Collection(resolveSource("./docs"));
 await docs.load();
+
 console.log(docs.tree); // NavEntry[] navigation tree
 console.log(docs.flat); // FlatEntry[] flat list
 
 const content = await docs.getContent(docs.flat[0]);
 const results = docs.filter("query"); // fuzzy search
-```
-
-### Export API
-
-```js
-import { DocsExporterFS } from "mdzilla";
-
-const exporter = new DocsExporterFS("./output");
-await exporter.export(docs.flat, docs);
 ```

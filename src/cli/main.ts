@@ -2,8 +2,8 @@
 import { parseArgs } from "node:util";
 import { isAgent } from "std-env";
 import { Collection } from "../collection.ts";
-import { FSSource, GitSource, HTTPSource, NpmSource } from "../source.ts";
-import { exportToFS } from "../exporter.ts";
+import { resolveSource } from "../source.ts";
+import { writeCollection } from "../exporter.ts";
 import { showCursor, leaveAltScreen } from "./_ansi.ts";
 import { printUsage } from "./_usage.ts";
 import { singleFileMode, pageMode, plainMode } from "./render.ts";
@@ -44,18 +44,12 @@ async function main() {
     return singleFileMode(docsDir, plain, isURL);
   }
 
-  const source = isURL
-    ? new HTTPSource(docsDir)
-    : docsDir.startsWith("gh:")
-      ? new GitSource(docsDir)
-      : docsDir.startsWith("npm:")
-        ? new NpmSource(docsDir)
-        : new FSSource(docsDir);
+  const source = resolveSource(docsDir);
   const docs = new Collection(source);
   await docs.load();
 
   if (exportDir) {
-    await exportToFS(docs, exportDir, { plainText: plain });
+    await writeCollection(docs, exportDir, { plainText: plain });
     console.log(`Exported ${docs.pages.length} pages to ${exportDir}`);
     return;
   }

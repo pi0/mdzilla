@@ -11,7 +11,7 @@ src/
                       includes flattenTree(), fuzzyMatch(), fuzzyFilter() as internal helpers
   nav.ts            — Nav scanner using md4x parseMeta
   source.ts         — re-exports all sources for backwards compat
-  exporter.ts       — exportToFS function
+  exporter.ts       — writeCollection function
   sources/
     _base.ts        — Source abstract base class
     fs.ts           — FSSource (local filesystem), includes buildFileMap()
@@ -100,8 +100,13 @@ interface ScanNavOptions {
 
 ### Exporters
 
-- `exportToFS` — export flat entries to `<outdir>/<path>.md`
-  - `ExportOptions` — `{ filter?: (entry: FlatEntry) => boolean }`
+- `exportSource` — high-level one-call export: resolves source, loads, and exports
+- `writeCollection` — low-level export of a loaded `Collection` to `<outdir>/<path>.md`
+  - `ExportOptions` — `{ filter?, plainText?, tocFile?, title? }`
+
+### Utilities
+
+- `resolveSource(input)` — resolve `"./dir"` / `"gh:..."` / `"npm:..."` / `"https://..."` to a `Source`
 
 ### Internal Utilities (not exported)
 

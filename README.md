@@ -23,10 +23,11 @@ Works best with [Docus](https://docus.dev)/[Undocs](https://undocs.pages.dev/) d
 ## Quick Start
 
 ```sh
-npx mdzilla <dir>                 # Browse local docs directory
-npx mdzilla <file.md>             # Render a single markdown file
-npx mdzilla gh:owner/repo         # Browse GitHub repo docs
-npx mdzilla npm:package-name      # Browse npm package docs
+npx mdzilla <dir>                        # Browse local docs directory
+npx mdzilla <file.md>                    # Render a single markdown file
+npx mdzilla gh:owner/repo                # Browse GitHub repo docs
+npx mdzilla npm:package-name             # Browse npm package docs
+npx mdzilla <source> --export <outdir>   # Export docs to flat .md files
 ```
 
 ## Agent Skill
@@ -126,18 +127,53 @@ npx mdzilla gh:unjs/h3 --plain         # List all pages in plain text
 
 ## Programmatic API
 
-```js
-import { Collection, FSSource } from "mdzilla";
+### Export Docs
 
-const docs = new Collection(new FSSource("./docs"));
+One-call export — resolves source, loads, and writes flat `.md` files:
+
+```js
+import { exportSource } from "mdzilla";
+
+await exportSource("./docs", "./dist/docs", {
+  title: "My Docs",
+  filter: (e) => !e.entry.path.startsWith("/blog"),
+});
+
+// Works with any source
+await exportSource("gh:unjs/h3", "./dist/h3-docs");
+await exportSource("npm:h3", "./dist/h3-docs", { plainText: true });
+await exportSource("https://h3.unjs.io", "./dist/h3-docs");
+```
+
+### Collection
+
+`Collection` is the main class for working with documentation programmatically — browse the nav tree, read page content, search, and filter entries.
+
+```js
+import { Collection, resolveSource } from "mdzilla";
+
+const docs = new Collection(resolveSource("./docs"));
 await docs.load();
 
-// Browse the navigation tree
-console.log(docs.tree);
+docs.tree;              // NavEntry[] — nested navigation tree
+docs.flat;              // FlatEntry[] — flattened list with depth info
+docs.pages;             // FlatEntry[] — only navigable pages (no directory stubs)
 
-// Get page content
-const content = await docs.getContent(docs.flat[0]);
+// Read page content
+const page = docs.findByPath("/guide/installation");
+const content = await docs.getContent(page);
+
+// Resolve a page flexibly (exact match, prefix stripping, direct fetch)
+const { entry, raw } = await docs.resolvePage("/docs/guide/installation");
+
+// Fuzzy search
+const results = docs.filter("instal"); // sorted by match score
+
+// Substring match (returns indices into docs.flat)
+const indices = docs.matchIndices("getting started");
 ```
+
+`resolveSource` auto-detects the source type from the input string (`gh:`, `npm:`, `https://`, or local path). You can also use specific source classes directly (`FSSource`, `GitSource`, `NpmSource`, `HTTPSource`).
 
 ## Development
 
