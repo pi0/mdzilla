@@ -7,6 +7,7 @@ Documentation tooling built on [md4x](https://github.com/unjs/md4x).
 ```
 src/
   index.ts          — library entry (exports Collection, sources, exporters)
+  utils.ts         — shared text utilities (extractSnippets)
   collection.ts     — Collection class (tree, flat entries, content cache, fuzzy search)
                       includes flattenTree(), fuzzyMatch(), fuzzyFilter() as internal helpers
   nav.ts            — Nav scanner using md4x parseMeta
@@ -36,6 +37,10 @@ test/
 ```
 
 ## Conventions
+
+### Web / Library Boundary
+
+Code in `web/` must import from `"mdzilla"` (the package), never via relative paths like `"../../../src/..."`. Relative imports bypass the bundler's deduplication and double-bundle shared logic.
 
 ### Docs Directory Structure
 
@@ -85,7 +90,7 @@ interface ScanNavOptions {
 
 ### Core
 
-- `Collection` — main class: `load()`, `reload()`, `getContent()`, `invalidate()`, `filter()`, `matchIndices()`
+- `Collection` — main class: `load()`, `reload()`, `getContent()`, `invalidate()`, `filter()`, `search()`, `suggest()`, `resolvePage()`
 - `FlatEntry` — `{ entry: NavEntry, depth: number, filePath?: string }`
 - `NavEntry` — navigation tree node type
 
@@ -109,6 +114,10 @@ interface ScanNavOptions {
 ### Utilities
 
 - `resolveSource(input)` — resolve `"./dir"` / `"gh:..."` / `"npm:..."` / `"https://..."` to a `Source`
+
+### Utilities
+
+- `extractSnippets(content, terms, opts?)` — extract text snippets around matching terms
 
 ### Internal Utilities (not exported)
 

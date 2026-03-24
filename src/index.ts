@@ -1,4 +1,5 @@
 export { Collection } from "./collection.ts";
+export { extractSnippets } from "./utils.ts";
 
 export type { FlatEntry, NavEntry, SearchResult } from "./collection.ts";
 

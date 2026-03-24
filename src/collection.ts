@@ -1,3 +1,4 @@
+import { parseMeta } from "md4x";
 import type { Source } from "./sources/_base.ts";
 import type { NavEntry } from "./nav.ts";
 
@@ -11,7 +12,9 @@ export interface ContentMatch {
 
 export interface SearchResult {
   flat: FlatEntry;
+  score: number;
   titleMatch: boolean;
+  heading?: string;
   contentMatches: ContentMatch[];
 }
 
@@ -65,20 +68,48 @@ export class Collection {
     return fuzzyFilter(this.flat, query, ({ entry }) => [entry.title, entry.path]);
   }
 
-  /** Search flat entries by query string, including page contents. Yields results as found. */
+  /** Search flat entries by query string, including page contents. Yields scored results as found. */
   async *search(query: string): AsyncIterable<SearchResult> {
     if (!query) return;
     const lower = query.toLowerCase();
+    const terms = lower.split(/\s+/).filter(Boolean);
+    const matchAll = (text: string) => terms.every((t) => text.includes(t));
+    const seen = new Set<string>();
+
     for (const flat of this.flat) {
       if (flat.entry.page === false) continue;
-      const titleMatch =
-        flat.entry.title.toLowerCase().includes(lower) ||
-        flat.entry.path.toLowerCase().includes(lower);
+      if (seen.has(flat.entry.path)) continue;
+      seen.add(flat.entry.path);
+
+      const titleLower = flat.entry.title.toLowerCase();
+      const titleMatch = matchAll(titleLower) || matchAll(flat.entry.path.toLowerCase());
+
       const content = await this.getContent(flat);
-      const contentMatches = content ? findMatchLines(content, lower) : [];
-      if (titleMatch || contentMatches.length > 0) {
-        yield { flat, titleMatch, contentMatches };
+      const contentLower = content?.toLowerCase();
+      const contentHit = contentLower ? matchAll(contentLower) : false;
+
+      if (!titleMatch && !contentHit) continue;
+
+      // Score: title exact=0, title partial=100, heading exact=150, heading partial=200, content=300
+      let score = 300;
+      let heading: string | undefined;
+
+      if (titleMatch) {
+        score = titleLower === lower ? 0 : 100;
+      } else if (content) {
+        const meta = parseMeta(content);
+        for (const h of meta.headings || []) {
+          const hLower = h.text.toLowerCase();
+          if (matchAll(hLower)) {
+            score = hLower === lower ? 150 : 200;
+            heading = h.text;
+            break;
+          }
+        }
       }
+
+      const contentMatches = content ? findMatchLines(content, lower) : [];
+      yield { flat, score, titleMatch, heading, contentMatches };
     }
   }
 
@@ -127,23 +158,31 @@ export class Collection {
     return {};
   }
 
-  /** Return indices of matching flat entries (case-insensitive substring). */
-  matchIndices(query: string): number[] {
-    if (!query) return [];
-    const lower = query.toLowerCase();
-    const matched = new Set<number>();
-    for (let i = 0; i < this.flat.length; i++) {
-      const { entry } = this.flat[i]!;
-      if (entry.title.toLowerCase().includes(lower) || entry.path.toLowerCase().includes(lower)) {
-        matched.add(i);
-        const parentDepth = this.flat[i]!.depth;
-        for (let j = i + 1; j < this.flat.length; j++) {
-          if (this.flat[j]!.depth <= parentDepth) break;
-          matched.add(j);
-        }
-      }
+  /** Suggest related pages for a query (fuzzy + keyword fallback). */
+  suggest(query: string, max = 5): FlatEntry[] {
+    // Try fuzzy match on full query
+    let results = this.filter(query);
+    if (results.length > 0) return results.slice(0, max);
+
+    // Try last path segment
+    const segments = query.replace(/^\/+/, "").split("/").filter(Boolean);
+    const lastSegment = segments.at(-1);
+    if (lastSegment && lastSegment !== query) {
+      results = this.filter(lastSegment);
+      if (results.length > 0) return results.slice(0, max);
     }
-    return [...matched].sort((a, b) => a - b);
+
+    // Try individual keywords from path segments
+    const keywords = segments.flatMap((s) => s.split("-")).filter(Boolean);
+    return this.pages
+      .filter((f) =>
+        keywords.some(
+          (kw) =>
+            f.entry.title.toLowerCase().includes(kw) ||
+            f.entry.path.toLowerCase().includes(kw),
+        ),
+      )
+      .slice(0, max);
   }
 }
 
@@ -218,6 +257,7 @@ function fuzzyFilter<T>(items: T[], query: string, getText: (item: T) => string[
   scored.sort((a, b) => a.score - b.score);
   return scored.map((s) => s.item);
 }
+
 
 function findMatchLines(
   content: string,

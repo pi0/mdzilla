@@ -3,6 +3,7 @@ import { basename } from "node:path";
 import { isAgent } from "std-env";
 import { parseMeta, renderToText } from "md4x";
 import type { Source } from "../sources/_base.ts";
+import { extractSnippets } from "../utils.ts";
 import type { Collection, FlatEntry } from "../collection.ts";
 import { renderContent } from "./content.ts";
 import { bold, cyan, dim, highlight } from "./_ansi.ts";
@@ -66,44 +67,43 @@ export async function renderPage(
 export async function searchMode(docs: Collection, query: string, plain?: boolean) {
   let count = 0;
   const matchedPaths: string[] = [];
-  for await (const { flat: f, titleMatch, contentMatches } of docs.search(query)) {
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  for await (const { flat: f, titleMatch, heading } of docs.search(query)) {
     if (count === 0) {
       process.stdout.write(bold(`Search results for "${query}":\n\n`));
     }
     count++;
     matchedPaths.push(f.entry.path);
 
+    const raw = await docs.getContent(f);
+    const plainText = raw ? renderToText(raw) : "";
+    const snippets = plainText ? extractSnippets(plainText, terms) : [];
+
     if (plain) {
       const desc = f.entry.description ? ` — ${f.entry.description}` : "";
       const badge =
-        titleMatch && contentMatches.length > 0
+        titleMatch && snippets.length > 0
           ? " (title + content)"
           : titleMatch
             ? " (title)"
-            : ` (${contentMatches.length} content match${contentMatches.length > 1 ? "es" : ""})`;
+            : heading
+              ? ` (heading: ${heading})`
+              : ` (${snippets.length} match${snippets.length !== 1 ? "es" : ""})`;
       process.stdout.write(`- **${f.entry.title}** \`${f.entry.path}\`${desc}${badge}\n`);
-      for (const m of contentMatches.slice(0, 3)) {
-        process.stdout.write(`  > ${m.text}\n`);
-        for (const ctx of m.context) {
-          if (ctx) process.stdout.write(`    ${ctx}\n`);
-        }
-      }
-      if (contentMatches.length > 3) {
-        process.stdout.write(`  ... ${contentMatches.length - 3} more matches\n`);
+      for (const s of snippets) {
+        process.stdout.write(`  > ${s}\n`);
       }
     } else {
-      process.stdout.write(`${bold(cyan(f.entry.title))} ${dim(f.entry.path)}\n`);
-      for (const m of contentMatches.slice(0, 3)) {
-        process.stdout.write(`  ${highlight(m.text, query)}\n`);
-      }
-      if (contentMatches.length > 3) {
-        process.stdout.write(`  ${dim(`... ${contentMatches.length - 3} more matches`)}\n`);
+      const subtitle = heading ? ` › ${cyan(heading)}` : "";
+      process.stdout.write(`${bold(cyan(f.entry.title))}${subtitle} ${dim(f.entry.path)}\n`);
+      for (const s of snippets) {
+        process.stdout.write(`  ${highlight(s, query)}\n`);
       }
     }
   }
   if (count === 0) {
     console.log(`No results for "${query}".`);
-    const suggestions = findSuggestions(docs, query);
+    const suggestions = docs.suggest(query);
     if (suggestions.length > 0) {
       console.log("");
       console.log(plain ? "Related pages:" : bold("Related pages:"));
@@ -165,9 +165,8 @@ export async function tocMode(docs: Collection) {
 
 export async function serverMode(source: Source, _docs: Collection) {
   const { serve } = await import("srvx");
-  const { createDocsServer } = (await import(
-    "../../web/.output/server/index.mjs"
-  )) as unknown as typeof import("../../web/server/entry.ts");
+  const { createDocsServer } =
+    (await import("../../web/.output/server/index.mjs")) as unknown as typeof import("../../web/server/entry.ts");
   const docsServer = await createDocsServer({ source });
   const server = serve({ fetch: docsServer.fetch, gracefulShutdown: false });
   await server.ready();
@@ -202,41 +201,12 @@ function agentTrailer(docs: Collection, currentPath?: string): string {
 
 function printNotFound(docs: Collection, pagePath: string) {
   process.stderr.write(`Page not found: ${pagePath}\n`);
-  const suggestions = findSuggestions(docs, pagePath);
+  const suggestions = docs.suggest(pagePath);
   if (suggestions.length > 0) {
     process.stderr.write("\nDid you mean:\n");
     for (const s of suggestions) {
       process.stderr.write(`  - ${s.entry.title} (${s.entry.path})\n`);
     }
   }
-  process.stderr.write(
-    "\nTo search within pages, pass a search query as second argument.\n",
-  );
-}
-
-/** Try fuzzy match, then keyword match on path segments. */
-function findSuggestions(docs: Collection, query: string) {
-  // Try fuzzy match on the full query
-  let results = docs.filter(query);
-  if (results.length > 0) return results.slice(0, 5);
-
-  // Try the last path segment
-  const segments = query.replace(/^\/+/, "").split("/").filter(Boolean);
-  const lastSegment = segments.at(-1);
-  if (lastSegment && lastSegment !== query) {
-    results = docs.filter(lastSegment);
-    if (results.length > 0) return results.slice(0, 5);
-  }
-
-  // Try individual keywords from path segments
-  const keywords = segments.flatMap((s) => s.split("-")).filter(Boolean);
-  return docs.pages
-    .filter((f) =>
-      keywords.some(
-        (kw) =>
-          f.entry.title.toLowerCase().includes(kw) ||
-          f.entry.path.toLowerCase().includes(kw),
-      ),
-    )
-    .slice(0, 5);
+  process.stderr.write("\nTo search within pages, pass a search query as second argument.\n");
 }
