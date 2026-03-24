@@ -97,7 +97,9 @@ export async function plainMode(docs: DocsManager, pagePath?: string) {
   }
 
   if (isAgent && navigable.length > 1) {
-    process.stdout.write("\n---\n\nTo read a specific page from the table of contents above, run this command again with `--page <path>`.\n");
+    process.stdout.write(
+      "\n---\n\nTo read a specific page from the table of contents above, run this command again with `--page <path>`.\n",
+    );
   }
 }
 
@@ -105,7 +107,11 @@ function agentTrailer(docs: DocsManager, currentPath?: string): string {
   const pages = docs.pages;
   if (pages.length <= 1) return "";
 
-  const normalized = currentPath?.startsWith("/") ? currentPath : currentPath ? "/" + currentPath : undefined;
+  const normalized = currentPath?.startsWith("/")
+    ? currentPath
+    : currentPath
+      ? "/" + currentPath
+      : undefined;
   const otherPages = pages.filter((p) => p.entry.path !== normalized);
   if (otherPages.length === 0) return "";
 

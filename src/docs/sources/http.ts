@@ -188,7 +188,7 @@ export class DocsSourceHTTP extends DocsSource {
       return `# ${res.status} ${res.statusText}\n\nFailed to fetch \`${url}\``;
     }
 
-    const contentType = res.headers.get("content-type") || "";
+    // const contentType = res.headers.get("content-type") || "";
     const text = await res.text();
 
     // if (_isHTML(contentType, text)) {
