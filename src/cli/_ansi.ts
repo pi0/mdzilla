@@ -202,11 +202,14 @@ export function highlightAnsi(s: string, query: string): string {
 
 export function highlight(text: string, query: string): string {
   if (!query) return text;
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx < 0) return text;
-  return (
-    text.slice(0, idx) +
-    bold(yellow(text.slice(idx, idx + query.length))) +
-    text.slice(idx + query.length)
-  );
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  let result = "";
+  let last = 0;
+  let pos = 0;
+  while ((pos = lowerText.indexOf(lowerQuery, last)) >= 0) {
+    result += text.slice(last, pos) + bold(yellow(text.slice(pos, pos + query.length)));
+    last = pos + query.length;
+  }
+  return last === 0 ? text : result + text.slice(last);
 }

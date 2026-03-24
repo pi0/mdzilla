@@ -3,6 +3,18 @@ import type { NavEntry } from "./nav.ts";
 
 export type { NavEntry };
 
+export interface ContentMatch {
+  line: number;
+  text: string;
+  context: string[];
+}
+
+export interface SearchResult {
+  flat: FlatEntry;
+  titleMatch: boolean;
+  contentMatches: ContentMatch[];
+}
+
 export interface FlatEntry {
   entry: NavEntry;
   depth: number;
@@ -48,9 +60,26 @@ export class Collection {
     this._contentCache.delete(filePath);
   }
 
-  /** Fuzzy filter flat entries by query string. */
+  /** Fuzzy filter flat entries by query string (title and path only). */
   filter(query: string): FlatEntry[] {
     return fuzzyFilter(this.flat, query, ({ entry }) => [entry.title, entry.path]);
+  }
+
+  /** Search flat entries by query string, including page contents. Yields results as found. */
+  async *search(query: string): AsyncIterable<SearchResult> {
+    if (!query) return;
+    const lower = query.toLowerCase();
+    for (const flat of this.flat) {
+      if (flat.entry.page === false) continue;
+      const titleMatch =
+        flat.entry.title.toLowerCase().includes(lower) ||
+        flat.entry.path.toLowerCase().includes(lower);
+      const content = await this.getContent(flat);
+      const contentMatches = content ? findMatchLines(content, lower) : [];
+      if (titleMatch || contentMatches.length > 0) {
+        yield { flat, titleMatch, contentMatches };
+      }
+    }
   }
 
   /** Flat entries that are navigable pages (excludes directory stubs). */
@@ -179,7 +208,7 @@ function fuzzyFilter<T>(items: T[], query: string, getText: (item: T) => string[
     let best = Infinity;
     for (const text of getText(item)) {
       const s = fuzzyMatch(query, text);
-      if (s >= 0 && s < best) best = s;
+      if (s !== -1 && s < best) best = s;
     }
     if (best < Infinity) {
       scored.push({ item, score: best });
@@ -188,4 +217,23 @@ function fuzzyFilter<T>(items: T[], query: string, getText: (item: T) => string[
 
   scored.sort((a, b) => a.score - b.score);
   return scored.map((s) => s.item);
+}
+
+function findMatchLines(
+  content: string,
+  lowerQuery: string,
+  contextLines = 1,
+): ContentMatch[] {
+  const matches: ContentMatch[] = [];
+  const lines = content.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i]!.toLowerCase().includes(lowerQuery)) {
+      const context: string[] = [];
+      for (let j = Math.max(0, i - contextLines); j <= Math.min(lines.length - 1, i + contextLines); j++) {
+        if (j !== i) context.push(lines[j]!.trim());
+      }
+      matches.push({ line: i + 1, text: lines[i]!.trim(), context });
+    }
+  }
+  return matches;
 }

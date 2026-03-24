@@ -4,6 +4,7 @@ import { isAgent } from "std-env";
 import { parseMeta, renderToText } from "md4x";
 import type { Collection } from "../collection.ts";
 import { renderContent } from "./content.ts";
+import { bold, cyan, dim, highlight } from "./_ansi.ts";
 
 export async function singleFileMode(filePath: string, plain?: boolean, isURL?: boolean) {
   const raw = isURL
@@ -32,7 +33,7 @@ export async function pageMode(docs: Collection, pagePath: string, plain?: boole
   const { entry, raw } = await docs.resolvePage(normalized);
 
   if (!raw) {
-    console.error(`Page not found: ${pagePath}`);
+    printNotFound(docs, pagePath, normalized);
     process.exit(1);
   }
 
@@ -68,10 +69,10 @@ export async function plainMode(docs: Collection, pagePath?: string) {
     const resolved = await docs.resolvePage(normalized);
     if (resolved.raw) {
       process.stdout.write(renderToText(resolved.raw) + "\n");
+      process.stdout.write(agentTrailer(docs, normalized));
     } else {
-      process.stdout.write(`Page not found: ${pagePath}\n`);
+      printNotFound(docs, pagePath, normalized);
     }
-    process.stdout.write(agentTrailer(docs, normalized));
     return;
   }
 
@@ -98,7 +99,62 @@ export async function plainMode(docs: Collection, pagePath?: string) {
 
   if (isAgent && navigable.length > 1) {
     process.stdout.write(
-      "\n---\n\nTo read a specific page from the table of contents above, run this command again with `--page <path>`.\n",
+      "\n---\n\nTo read a specific page from the table of contents above, run this command again with `--page <path>`.\nTo search within pages, use `--search <query>`.\n",
+    );
+  }
+}
+
+export async function searchMode(docs: Collection, query: string) {
+  let count = 0;
+  const matchedPaths: string[] = [];
+  for await (const { flat: f, titleMatch, contentMatches } of docs.search(query)) {
+    if (count === 0) {
+      process.stdout.write(bold(`Search results for "${query}":\n\n`));
+    }
+    count++;
+    matchedPaths.push(f.entry.path);
+
+    if (isAgent) {
+      // Agent-friendly: clear page identity, description, and context
+      const desc = f.entry.description ? ` — ${f.entry.description}` : "";
+      const badge = titleMatch && contentMatches.length > 0
+        ? " (title + content)"
+        : titleMatch
+          ? " (title)"
+          : ` (${contentMatches.length} content match${contentMatches.length > 1 ? "es" : ""})`;
+      process.stdout.write(`- **${f.entry.title}** \`${f.entry.path}\`${desc}${badge}\n`);
+      for (const m of contentMatches.slice(0, 3)) {
+        process.stdout.write(`  > ${m.text}\n`);
+        for (const ctx of m.context) {
+          if (ctx) process.stdout.write(`    ${ctx}\n`);
+        }
+      }
+      if (contentMatches.length > 3) {
+        process.stdout.write(`  ... ${contentMatches.length - 3} more matches\n`);
+      }
+    } else {
+      process.stdout.write(`${bold(cyan(f.entry.title))} ${dim(f.entry.path)}\n`);
+      for (const m of contentMatches.slice(0, 3)) {
+        process.stdout.write(`  ${highlight(m.text, query)}\n`);
+      }
+      if (contentMatches.length > 3) {
+        process.stdout.write(`  ${dim(`... ${contentMatches.length - 3} more matches`)}\n`);
+      }
+    }
+  }
+  if (count === 0) {
+    console.log(`No results for "${query}".`);
+  } else if (isAgent) {
+    process.stdout.write(
+      [
+        "",
+        "---",
+        "",
+        `Found ${count} page${count > 1 ? "s" : ""} matching "${query}".`,
+        "To read a specific page, run this command again with `--page <path>`, for example:",
+        ...[...new Set(matchedPaths)].slice(0, 3).map((p) => `  --page ${p}`),
+        "",
+      ].join("\n"),
     );
   }
 }
@@ -122,8 +178,44 @@ function agentTrailer(docs: Collection, currentPath?: string): string {
     ...otherPages.map((p) => `  - [${p.entry.title}](${p.entry.path})`),
     "",
     "To read a specific page, run this command again with `--page <path>`.",
+    "To search within pages, run this command again with `--search <query>`.",
     "To view the full table of contents, run this command without `--page`.",
     "",
   ];
   return "\n" + lines.join("\n");
+}
+
+function printNotFound(docs: Collection, pagePath: string, normalized: string) {
+  process.stderr.write(`Page not found: ${pagePath}\n`);
+  // Suggest similar pages from path segments
+  const segments = normalized.split("/").filter(Boolean);
+  const keywords = segments.flatMap((s) => s.split("-")).filter(Boolean);
+  let suggestions = docs.filter(segments.at(-1) || normalized);
+  if (suggestions.length === 0) {
+    suggestions = docs.pages.filter((f) =>
+      keywords.some(
+        (kw) =>
+          f.entry.title.toLowerCase().includes(kw) ||
+          f.entry.path.toLowerCase().includes(kw),
+      ),
+    );
+  }
+  if (suggestions.length > 0) {
+    const shown = suggestions.slice(0, 5);
+    process.stderr.write("\nDid you mean:\n");
+    for (const s of shown) {
+      process.stderr.write(`  - ${s.entry.title} (${s.entry.path})\n`);
+    }
+    if (suggestions.length > 5) {
+      process.stderr.write(`  ... ${suggestions.length - 5} more\n`);
+    }
+  }
+  process.stderr.write(
+    [
+      "",
+      "To search within pages, use `--search <query>`.",
+      "To view the full table of contents, run this command without `--page`.",
+      "",
+    ].join("\n"),
+  );
 }

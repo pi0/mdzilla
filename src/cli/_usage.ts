@@ -32,6 +32,7 @@ export function printUsage(hasInput: boolean): never {
       "",
       `${bold("Options:")}`,
       `  ${cyan("--export")} ${dim("<dir>")}   Export docs to flat .md files`,
+      `  ${cyan("--search")} ${dim("<query>")} Search pages by title or path`,
       `  ${cyan("--page")} ${dim("<path>")}    Print a single page and exit`,
       `  ${cyan("--plain")}          Plain text output (no TUI)`,
       `  ${cyan("--headless")}       Alias for --plain`,

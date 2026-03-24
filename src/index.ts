@@ -1,6 +1,6 @@
 export { Collection } from "./collection.ts";
 
-export type { FlatEntry, NavEntry } from "./collection.ts";
+export type { FlatEntry, NavEntry, SearchResult } from "./collection.ts";
 
 export { Source, FSSource, GitSource, HTTPSource, NpmSource, resolveSource } from "./source.ts";
 

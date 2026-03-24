@@ -6,7 +6,7 @@ import { resolveSource } from "../source.ts";
 import { writeCollection } from "../exporter.ts";
 import { showCursor, leaveAltScreen } from "./_ansi.ts";
 import { printUsage } from "./_usage.ts";
-import { singleFileMode, pageMode, plainMode } from "./render.ts";
+import { singleFileMode, pageMode, plainMode, searchMode } from "./render.ts";
 import { interactiveMode } from "./interactive/index.ts";
 import { openInBrowser } from "./_utils.ts";
 
@@ -23,6 +23,7 @@ async function main() {
       help: { type: "boolean", short: "h" },
       export: { type: "string" },
       page: { type: "string", short: "p" },
+      search: { type: "string", short: "s" },
       plain: { type: "boolean", default: isAgent || !process.stdout.isTTY },
       headless: { type: "boolean" },
       tui: { type: "boolean" },
@@ -61,6 +62,10 @@ async function main() {
     if (urlPath && urlPath !== "/") {
       pagePath = urlPath;
     }
+  }
+
+  if (values.search) {
+    return searchMode(docs, values.search);
   }
 
   if (pagePath && !plain) {
