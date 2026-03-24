@@ -97,7 +97,7 @@ interface ScanNavOptions {
   - `DocsSourceGitOptions` — `{ auth?: string, subdir?: string }`
 - `DocsSourceNpm` — download npm package via giget, then read locally
   - `DocsSourceNpmOptions` — `{ subdir?: string }`
-- `DocsSourceHTTP` — fetch pages over HTTP with `Accept: text/markdown`; falls back to mdream HTML→markdown conversion
+- `DocsSourceHTTP` — fetch pages over HTTP with `Accept: text/markdown`
   - `DocsSourceHTTPOptions` — `{ headers?: Record<string, string> }`
 
 ### Exporters

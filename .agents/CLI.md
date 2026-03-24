@@ -20,7 +20,7 @@ pnpm mdzilla <dir> --export <out> # export docs to flat .md files
 - `src/cli/content.ts` — content renderer (markdown → ANSI with syntax highlighting)
 - `src/cli/render.ts` — compositor (combines sidebar + content, renders footer)
 - `src/docs/manager.ts` — `DocsManager` class (tree loading, flat entries, file map, content cache, fuzzy search)
-- `src/docs/source.ts` — `DocsSourceFS` (local), `DocsSourceGit` (GitHub via giget), `DocsSourceHTTP` (remote HTTP with llms.txt + mdream fallback)
+- `src/docs/source.ts` — `DocsSourceFS` (local), `DocsSourceGit` (GitHub via giget), `DocsSourceHTTP` (remote HTTP with llms.txt)
 - `src/docs/exporter.ts` — `DocsExporterFS` (export docs to flat .md files)
 
 ## Architecture
@@ -124,7 +124,7 @@ All styling uses raw escape sequences — no chalk/colorette dependency:
 - `DocsSourceGit` — download from GitHub via giget, supports `auth` and `subdir` options
   - Downloads to `node_modules/.mdzilla/gh/<id>/`
 - `DocsSourceHTTP` — fetch pages over HTTP; tries `/llms.txt` first, falls back to homepage link extraction
-  - Sends `Accept: text/markdown` header, auto-converts HTML via `mdream`
+  - Sends `Accept: text/markdown` header
 
 ### Exporter (`src/docs/exporter.ts`)
 

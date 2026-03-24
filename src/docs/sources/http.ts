@@ -191,10 +191,10 @@ export class DocsSourceHTTP extends DocsSource {
     const contentType = res.headers.get("content-type") || "";
     const text = await res.text();
 
-    if (_isHTML(contentType, text)) {
-      const { htmlToMarkdown } = await import("mdream");
-      return htmlToMarkdown(text, { origin: url });
-    }
+    // if (_isHTML(contentType, text)) {
+    //   const { htmlToMarkdown } = await import("mdream");
+    //   return htmlToMarkdown(text, { origin: url });
+    // }
 
     return text;
   }

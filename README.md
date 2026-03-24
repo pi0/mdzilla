@@ -14,7 +14,7 @@ Markdown browser for humans and agents.
 
 > Browse docs from local directories, GitHub repos, and remote websites — all from your terminal.
 
-Built with [md4x](https://github.com/unjs/md4x), [mdream](https://github.com/harlan-zw/mdream), [giget](https://github.com/unjs/giget) and [speed-highlight](https://github.com/speed-highlight/core), [nitro](https://v3.nitro.build/), [h3](https://h3.dev/), [srvx](https://srvx.h3.dev/) and [vite](https://vite.dev/).
+Built with [md4x](https://github.com/unjs/md4x), [giget](https://github.com/unjs/giget) and [speed-highlight](https://github.com/speed-highlight/core), [nitro](https://v3.nitro.build/), [h3](https://h3.dev/), [srvx](https://srvx.h3.dev/) and [vite](https://vite.dev/).
 
 Supports any website with [`/llms.txt`](https://llmstxt.org/) or markdown content negotiation.
 
