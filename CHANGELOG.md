@@ -1,6 +1,36 @@
 # Changelog
 
 
+## v0.2.0
+
+[compare changes](https://github.com/pi0/mdzilla/compare/v0.1.0...v0.2.0)
+
+### 🚀 Enhancements
+
+- Use filenames to preserve nav tree ([63b261c](https://github.com/pi0/mdzilla/commit/63b261c))
+- Add `exportSource` and `resolveSource` high-level APIs ([d54651f](https://github.com/pi0/mdzilla/commit/d54651f))
+- **cli:** Search mode ([a99ed3e](https://github.com/pi0/mdzilla/commit/a99ed3e))
+
+### 💅 Refactors
+
+- ⚠️  Update structure ([3b731d5](https://github.com/pi0/mdzilla/commit/3b731d5))
+- Rename source exports ([a00ef46](https://github.com/pi0/mdzilla/commit/a00ef46))
+- ⚠️  Simplify cli ([7e3babc](https://github.com/pi0/mdzilla/commit/7e3babc))
+- Improve search ([3d1030b](https://github.com/pi0/mdzilla/commit/3d1030b))
+
+### 🏡 Chore
+
+- Update deps ([1f0700c](https://github.com/pi0/mdzilla/commit/1f0700c))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️  Update structure ([3b731d5](https://github.com/pi0/mdzilla/commit/3b731d5))
+- ⚠️  Simplify cli ([7e3babc](https://github.com/pi0/mdzilla/commit/7e3babc))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.1.0
 
 [compare changes](https://github.com/pi0/mdzilla/compare/v0.0.6...v0.1.0)
