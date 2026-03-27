@@ -1,15 +1,16 @@
-import type { Collection, Source } from "mdzilla";
+import { type Collection, type Source } from "mdzilla";
 
 let _docs: Collection;
 
 export async function useDocs(initOpts?: { source: Source }): Promise<Collection> {
   if (_docs) return _docs;
   if (!_docs) {
-    const { Collection, GitSource } = await import("mdzilla");
+    const { Collection, resolveSource } = await import("mdzilla");
     _docs = new Collection(
-      initOpts?.source || new GitSource("gh:nitrojs/nitro/docs", { subdir: "docs" }),
+      initOpts?.source || resolveSource(process.env.DOCS_SOURCE || "gh:nitrojs/nitro/docs"),
     );
     await _docs.load();
+    _docs.watch();
   }
   return _docs;
 }

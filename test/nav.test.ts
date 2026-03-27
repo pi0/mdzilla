@@ -101,6 +101,7 @@ describe("scanNav", () => {
               "title": "Installation",
             },
             {
+              "heading": "Configuration",
               "icon": "i-heroicons-cog",
               "order": 2,
               "path": "/getting-started/configuration",

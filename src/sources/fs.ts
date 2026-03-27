@@ -1,12 +1,14 @@
 import { readFile } from "node:fs/promises";
+import { watch as fsWatch, type FSWatcher } from "node:fs";
 import { scanNav } from "../nav.ts";
 import { readdir } from "node:fs/promises";
 import { join, extname } from "node:path";
-import { Source } from "./_base.ts";
+import { Source, type WatchCallback } from "./_base.ts";
 import type { NavEntry } from "../nav.ts";
 
 export class FSSource extends Source {
   dir: string;
+  private _watcher?: FSWatcher;
 
   constructor(dir: string) {
     super();
@@ -25,6 +27,19 @@ export class FSSource extends Source {
 
   async readContent(filePath: string): Promise<string> {
     return readFile(filePath, "utf8");
+  }
+
+  override watch(callback: WatchCallback): void {
+    this.unwatch();
+    this._watcher = fsWatch(this.dir, { recursive: true }, (_event, filename) => {
+      if (!filename || filename.startsWith(".") || filename.startsWith("_")) return;
+      callback({ path: "/" + filename });
+    });
+  }
+
+  override unwatch(): void {
+    this._watcher?.close();
+    this._watcher = undefined;
   }
 }
 

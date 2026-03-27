@@ -67,6 +67,19 @@ npx mdzilla gh:unjs/h3 /guide/basics    # Render a specific page
 npx mdzilla gh:unjs/h3 router           # Search for 'router'
 ```
 
+### Web Server
+
+Running `mdzilla <source>` without a query opens docs in the browser with a local web server:
+
+```sh
+npx mdzilla ./docs                   # Browse local docs in browser
+npx mdzilla gh:unjs/h3               # Browse GitHub repo docs
+```
+
+The web UI provides a sidebar navigation, full-text search, syntax-highlighted pages, and dark/light theme support.
+
+For local sources (`FSSource`), the server watches for file changes and live-reloads both the navigation and the current page via Server-Sent Events — no manual refresh needed.
+
 ### Plain Mode
 
 Use `--plain` for plain text output. Auto-enabled when piping output or when called by AI agents.
@@ -123,6 +136,13 @@ const results = docs.filter("instal"); // sorted by match score
 
 // Substring match (returns indices into docs.flat)
 const indices = docs.matchIndices("getting started");
+
+// Watch for changes (FSSource only) with live reload
+docs.watch();
+const unsub = docs.onChange((path) => {
+  console.log(`Changed: ${path}`);
+});
+// Later: unsub() and docs.unwatch()
 ```
 
 `resolveSource` auto-detects the source type from the input string (`gh:`, `npm:`, `https://`, or local path). You can also use specific source classes directly (`FSSource`, `GitSource`, `NpmSource`, `HTTPSource`).

@@ -31,6 +31,8 @@ export class Collection {
 
   private _fileMap = new Map<string, string>();
   private _contentCache = new Map<string, string>();
+  private _changeListeners = new Set<(path: string) => void>();
+  private _reloadTimer?: ReturnType<typeof setTimeout>;
 
   constructor(source: Source) {
     this.source = source;
@@ -46,6 +48,31 @@ export class Collection {
 
   async reload(): Promise<void> {
     return this.load();
+  }
+
+  /** Start watching source for changes. Debounces, reloads collection, and notifies listeners. */
+  watch(): void {
+    this.source.watch(({ path }) => {
+      clearTimeout(this._reloadTimer);
+      this._reloadTimer = setTimeout(() => {
+        this.reload().then(() => {
+          for (const listener of this._changeListeners) listener(path);
+        });
+      }, 100);
+    });
+  }
+
+  /** Stop watching source. */
+  unwatch(): void {
+    clearTimeout(this._reloadTimer);
+    this.source.unwatch();
+    this._changeListeners.clear();
+  }
+
+  /** Register a change listener. Returns unsubscribe function. */
+  onChange(listener: (path: string) => void): () => void {
+    this._changeListeners.add(listener);
+    return () => this._changeListeners.delete(listener);
   }
 
   /** Get raw file content for a flat entry (cached). */

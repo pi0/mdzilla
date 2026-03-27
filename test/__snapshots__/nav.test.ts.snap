@@ -135,6 +135,7 @@ exports[`scanNav > builds nav from fixture 1`] = `
   {
     "children": [
       {
+        "heading": "H3 Utils",
         "icon": "pixelarticons:github",
         "order": 0,
         "path": "/utils",
