@@ -194,7 +194,9 @@ async function _scanNav(
 
       const resolvedOrder = typeof meta.order === "number" ? meta.order : order;
       const resolvedSlug = slug === "index" ? "" : slug;
-      const title = (meta.title as string) || humanizeSlug(slug) || "index";
+      const firstHeading = (rawMeta.headings as { text: string; level: number }[] | undefined)
+        ?.find((h) => h.level === 1)?.text;
+      const title = (meta.title as string) || firstHeading || humanizeSlug(slug) || "index";
 
       const entryPath =
         resolvedSlug === ""
@@ -212,6 +214,7 @@ async function _scanNav(
         path: entryPath,
         title,
         order: resolvedOrder,
+        ...(firstHeading && firstHeading !== title ? { heading: firstHeading } : {}),
         ...(meta.icon ? { icon: meta.icon as string } : {}),
         ...(meta.description ? { description: meta.description as string } : {}),
         ...(draft ? { draft: true } : {}),
