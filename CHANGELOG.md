@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v0.2.1
+
+[compare changes](https://github.com/pi0/mdzilla/compare/v0.2.0...v0.2.1)
+
+### 🚀 Enhancements
+
+- **nav:** Expose first h1 heading in nav entries ([d1cab4d](https://github.com/pi0/mdzilla/commit/d1cab4d))
+- Basic watching support ([dfb1172](https://github.com/pi0/mdzilla/commit/dfb1172))
+
+### 🏡 Chore
+
+- Update deps ([4ba5a48](https://github.com/pi0/mdzilla/commit/4ba5a48))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v0.2.0
 
 [compare changes](https://github.com/pi0/mdzilla/compare/v0.1.0...v0.2.0)
